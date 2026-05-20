@@ -103,7 +103,36 @@ Invocation: `GET /server/my_basic_io/execute?args=<input_string>`
 
 ## Advanced I/O Functions
 
-Full HTTP support with native request/response objects (Express-like). Best for REST APIs.
+Full HTTP support with raw Node.js request/response objects. Best for REST APIs.
+
+> **node20 runtime — NOT Express.** `req` is a raw `http.IncomingMessage` and `res` is a raw
+> `http.ServerResponse`. Do **not** use `res.status()`, `res.json()`, or `req.body` directly —
+> these are Express methods and will throw `res.status is not a function`. Use the helpers below.
+
+### Required helpers (always include in node20 Advanced I/O)
+```javascript
+// Send a JSON response
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
+// Read and parse the request body (req.body is NOT auto-parsed in node20)
+function getBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body && typeof req.body === 'object') return resolve(req.body);
+    if (req.body && typeof req.body === 'string') {
+      try { return resolve(JSON.parse(req.body)); } catch (e) { return resolve({}); }
+    }
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(data ? JSON.parse(data) : {}); } catch (e) { resolve({}); }
+    });
+    req.on('error', reject);
+  });
+}
+```
 
 ### Node.js Template
 ```javascript
@@ -111,32 +140,52 @@ Full HTTP support with native request/response objects (Express-like). Best for 
 'use strict';
 const catalyst = require('zcatalyst-sdk-node');
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
+function getBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body && typeof req.body === 'object') return resolve(req.body);
+    if (req.body && typeof req.body === 'string') {
+      try { return resolve(JSON.parse(req.body)); } catch (e) { return resolve({}); }
+    }
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(data ? JSON.parse(data) : {}); } catch (e) { resolve({}); }
+    });
+    req.on('error', reject);
+  });
+}
+
 module.exports = async (req, res) => {
   try {
     const catalystApp = catalyst.initialize(req);
     const method = req.method;
 
     if (method === 'GET') {
-      const queryParam = req.query.id;
-      res.status(200).json({ message: 'GET request', id: queryParam });
+      const queryParam = req.query?.id;
+      sendJson(res, 200, { message: 'GET request', id: queryParam });
 
     } else if (method === 'POST') {
-      const body = req.body;
-      res.status(201).json({ message: 'Created', data: body });
+      const body = await getBody(req);
+      sendJson(res, 201, { message: 'Created', data: body });
 
     } else if (method === 'PUT') {
-      const body = req.body;
-      res.status(200).json({ message: 'Updated', data: body });
+      const body = await getBody(req);
+      sendJson(res, 200, { message: 'Updated', data: body });
 
     } else if (method === 'DELETE') {
-      res.status(200).json({ message: 'Deleted' });
+      sendJson(res, 200, { message: 'Deleted' });
 
     } else {
-      res.status(405).json({ error: 'Method not allowed' });
+      sendJson(res, 405, { error: 'Method not allowed' });
     }
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: error.message });
+    sendJson(res, 500, { error: error.message });
   }
 };
 ```
@@ -163,12 +212,17 @@ use Stratus presigned upload URLs instead of passing data through functions.
 'use strict';
 const catalyst = require('zcatalyst-sdk-node');
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
 module.exports = async (req, res) => {
   const catalystApp = catalyst.initialize(req);
   const uploadedFile = req.files?.file;
 
   if (!uploadedFile) {
-    return res.status(400).json({ error: 'No file provided' });
+    return sendJson(res, 400, { error: 'No file provided' });
   }
 
   const stratus = catalystApp.stratus();
@@ -180,9 +234,9 @@ module.exports = async (req, res) => {
       body: uploadedFile.data,
       contentType: uploadedFile.mimetype
     });
-    res.status(200).json({ message: 'Uploaded', name: uploadedFile.name });
+    sendJson(res, 200, { message: 'Uploaded', name: uploadedFile.name });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendJson(res, 500, { error: err.message });
   }
 };
 ```
@@ -472,6 +526,22 @@ catalyst.server.callAdvancedIO("my_api", {
   .catch(err => console.error(err));
 ```
 
+> **Always use `credentials: 'include'` when using native `fetch()`** to call Catalyst functions
+> from a Catalyst-hosted web client. Without it, auth cookies are not forwarded and
+> `getCurrentUser()` in the function will throw a 401 — even when both are on the same domain.
+>
+> ```javascript
+> const res = await fetch('/server/my_api/execute', {
+>   method: 'POST',
+>   credentials: 'include',   // ← required for auth cookies to be sent
+>   headers: { 'Content-Type': 'application/json' },
+>   body: JSON.stringify({ key: 'value' })
+> });
+> ```
+>
+> The `catalyst.server.callAdvancedIO()` SDK method handles this automatically.
+> Use it when possible to avoid this class of issue.
+
 ---
 
 ## SDK Component Access Patterns
@@ -520,36 +590,48 @@ const connection = catalystApp.connection();
 'use strict';
 const catalyst = require('zcatalyst-sdk-node');
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
+function getBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body && typeof req.body === 'object') return resolve(req.body);
+    if (req.body && typeof req.body === 'string') {
+      try { return resolve(JSON.parse(req.body)); } catch (e) { return resolve({}); }
+    }
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(data ? JSON.parse(data) : {}); } catch (e) { resolve({}); }
+    });
+    req.on('error', reject);
+  });
+}
+
 module.exports = async (req, res) => {
   try {
     const catalystApp = catalyst.initialize(req);
+    const body = await getBody(req);
+
     // Validate input
-    if (!req.body || !req.body.name) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Name is required'
-      });
+    if (!body.name) {
+      return sendJson(res, 400, { status: 'error', message: 'Name is required' });
     }
 
     // Business logic
-    const result = await someOperation(catalystApp, req.body);
+    const result = await someOperation(catalystApp, body);
 
-    res.status(200).json({
-      status: 'success',
-      data: result
-    });
+    sendJson(res, 200, { status: 'success', data: result });
   } catch (error) {
     console.error('Function error:', error);
 
-    // Check for Catalyst-specific errors
     if (error.code === 'INVALID_DATA') {
-      return res.status(400).json({ status: 'error', message: error.message });
+      return sendJson(res, 400, { status: 'error', message: error.message });
     }
 
-    res.status(500).json({
-      status: 'error',
-      message: 'Internal server error'
-    });
+    sendJson(res, 500, { status: 'error', message: 'Internal server error' });
   }
 };
 ```
@@ -669,3 +751,51 @@ curl -X POST http://localhost:3000/server/my_function/execute -d '{"name":"Test"
 
 Note: Event, Cron, and Job functions cannot be tested locally via `catalyst serve`.
 Deploy to Development and trigger them from the console for integration testing.
+
+---
+
+## Common SDK Mistakes by Language
+
+Agents frequently generate code with these errors. Check this section before finalising any
+function code, especially when switching between function types or languages.
+
+### Node.js (`zcatalyst-sdk-node`)
+
+| Mistake | What goes wrong | Correct approach |
+|---------|----------------|------------------|
+| Calling `catalyst.initialize()` without `req` in Advanced I/O | SDK initialization fails; `catalystApp` is not correctly scoped to the request | Must pass `req`: `catalyst.initialize(req)` |
+| Calling `basicIO.write()` more than once | Only the first call is used; subsequent calls are silently ignored or cause errors | `basicIO.write()` can only be called **once** per function execution |
+| Expecting JSON output from Basic I/O | Basic I/O only supports STRING output | Basic I/O returns STRING only — use Advanced I/O for JSON responses |
+| Setting HTTP response headers in Basic I/O | Basic I/O does not have a response object | Basic I/O does NOT support HTTP headers or status codes — use Advanced I/O |
+| Using `res.status()` or `res.json()` in Advanced I/O (node20) | `res` is a raw `http.ServerResponse`, not Express — these methods do not exist | Use `res.writeHead(statusCode, headers)` and `res.end(JSON.stringify(data))` |
+| Not handling ZCQL 300-row limit | Queries silently return only 300 rows; data appears missing | Paginate with `LIMIT offset, count` (e.g., `LIMIT 0, 300`, `LIMIT 300, 300`) |
+| Using wrong port variable for AppSail | App binds to hard-coded port; Catalyst routes to a different port, causing connection failures | Always use `process.env.X_ZOHO_CATALYST_LISTEN_PORT \|\| 9000` |
+| Not adding `credentials: 'include'` to fetch calls from web client | Auth cookies not forwarded; `getCurrentUser()` throws 401 even for authenticated users | Add `credentials: 'include'` to all fetch calls from the web client |
+| Parsing `CREATEDTIME` directly with `new Date()` | Catalyst stores CREATEDTIME in the project timezone without an offset marker; `new Date()` treats it as UTC → wrong timestamps | Append the project timezone offset before parsing the date string |
+
+### Java
+
+| Mistake | What goes wrong | Correct approach |
+|---------|----------------|------------------|
+| Uploading compiled function via console without `.class` files | Function fails to execute with a missing class reference | Use `catalyst deploy` from CLI — it auto-compiles and creates missing dependency files |
+| Using JDK version other than 8, 11, or 17 | Build or runtime errors; Catalyst only supports these three versions | Only JDK 8, 11, and 17 are supported |
+| Not using context timing methods for long operations | Operations may exceed the timeout with no graceful handling | Use `context.getMaxExecutionTimeMs()` and `context.getRemainingExecutionTimeMs()` to manage time-sensitive operations |
+
+### Python
+
+| Mistake | What goes wrong | Correct approach |
+|---------|----------------|------------------|
+| Not using Flask for Advanced I/O functions | Python Advanced I/O functions require Flask; without it, the function cannot handle HTTP requests | Python Advanced I/O functions require the Flask framework |
+| Using wrong handler signature for a function type | Function fails to initialize or throws an error on invocation | Handler signatures differ per function type — always consult the Function Types Overview table above |
+| Using `context.getMaxExecutionTimeMs()` (camelCase) in Python | Method not found error | Python uses snake_case: `context.get_max_execution_time_ms()` and `context.get_remaining_execution_time_ms()` |
+
+### General (all languages)
+
+| Mistake | What goes wrong | Correct approach |
+|---------|----------------|------------------|
+| Creating `ROWID`, `CREATORID`, `CREATEDTIME`, or `MODIFIEDTIME` columns | These system columns are auto-created by Catalyst; attempting to create them causes an error | Never create these columns — Catalyst adds them automatically to every table |
+| Hardcoding Catalyst IDs (Table ID, ZAID, Org ID, Project ID) without explanation | Users cannot find the correct values; wrong IDs cause permission errors | Always add an inline comment specifying exactly where to find the ID in the Catalyst console |
+| Using Production environment in dev/test code | Production requires separate authorization; mixing environments causes auth failures | Always default to `"Development"` environment; only use production when explicitly requested |
+| Checking for `.catalystrc` and `catalyst.json` before init | Re-running init on an already-initialized project overwrites config | Always check for existing `.catalystrc` and `catalyst.json` before scaffolding |
+| Not serializing JSON before storing in Cache | Cache values are strings only; storing objects directly causes type errors | Always `JSON.stringify()` before storing in Cache and `JSON.parse()` when reading |
+| Inserting emoji or 4-byte UTF-8 into Data Store | Silently stored as `?`; data is corrupted | Store a string key (e.g., `"happy"`) and map to emoji in application code |

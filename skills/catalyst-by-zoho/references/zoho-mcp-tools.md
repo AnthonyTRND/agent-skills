@@ -318,3 +318,48 @@ When a user asks you to build a Catalyst application:
 
 4. **If you're unsure** — check if any `CatalystbyZoho_*` tools appear in your available tool list.
    If yes, MCP is connected. If no, proceed with code-only approach.
+
+---
+
+## Security & Permission Guidance
+
+### Why "On Demand" authorization is required (not optional)
+- "Authorization via Connection" uses a **single Super Admin token for ALL calls** from all users.
+  This makes it impossible to identify which user performed an action, violating access control best practices.
+- "On Demand" authenticates **each user individually**, ensuring proper user-level attribution and
+  access control. This is the only recommended approach for teams with multiple users.
+
+### Scoping MCP tool access
+- Only add the specific Catalyst tools you need to your MCP server — do not add all tools blindly.
+- Remove or exclude destructive tools (`Delete_Row_By_Id`, `Delete_Rows`, `Delete_Objects`) if the
+  agent only needs read operations.
+- Use **separate MCP server configurations** for development and production environments to prevent
+  accidental production operations.
+
+### Environment isolation
+- **ALWAYS default to `"Development"` environment** for all MCP tool calls.
+- Production requires separate authorization. Never operate on production unless the user
+  explicitly requests it.
+- If production access is needed, create a dedicated MCP server configuration for it.
+
+### Handling permission errors
+
+| Error | Meaning | Action |
+|-------|---------|--------|
+| `PERMISSION_NEEDED` | Wrong project ID or insufficient permissions | Verify project ID from the Catalyst console URL (`.../project/<project_id>/...`) |
+| `INVALID_ORG` | Wrong org ID in `Catalyst-org` header | Re-run `List_All_Organizations` to get the correct ID |
+| Tool not found / unavailable | Tool not added to the MCP server | Add it in mcp.zoho.com → Config Tools → search → Add Now |
+| Connection not authorized | "On Demand" auth not enabled | Go to mcp.zoho.com → Connections → Edit → select "On Demand" → Update |
+| `PERMISSION_NEEDED` on Production | Production requires separate auth | Switch to `"Development"` environment; set up production MCP separately if needed |
+
+### Best practices for agents
+- Always verify access with a **read operation** before performing writes (e.g., `List_All_Tables`
+  before `Create_Table`). This catches ID mismatches before wasting write calls.
+- Never store or log org IDs, project IDs, or tokens in generated application code.
+- When generating code that references Catalyst IDs, use named constants with inline comments
+  that tell the user exactly where to find the real value:
+  ```javascript
+  const PROJECT_ID = "YOUR_PROJECT_ID"; // Find in Catalyst console URL: .../project/<id>/...
+  const ORG_ID = "YOUR_ORG_ID";        // Find via List_All_Organizations MCP tool
+  ```
+- Do not attempt to access the Production environment unless the user explicitly requests it.

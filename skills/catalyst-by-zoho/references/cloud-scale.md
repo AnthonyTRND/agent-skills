@@ -520,6 +520,24 @@ const newUser = await userMgmt.registerUser(signupConfig, userConfig);
 
 Auth types supported: Catalyst built-in auth, Zoho accounts, custom SSO.
 
+> **Embedded sign-in widget has no built-in signup flow.** `catalyst.auth.signIn("divId", config)`
+> renders a Zoho IAM login iframe — there is no sign-up button or registration form inside it.
+> For apps that require user registration, build a custom sign-up form and call
+> `catalyst.auth.signUp()` from the Web SDK. Toggle between the login iframe and the custom form
+> in your UI:
+>
+> ```javascript
+> // Custom sign-up form handler
+> await catalyst.auth.signUp({
+>   first_name: firstName,
+>   last_name: lastName,
+>   email_id: email,
+>   platform_type: 'web',
+>   redirect_url: window.location.origin + '/app/index.html'
+> });
+> // The user receives a verification email from Zoho to activate their account.
+> ```
+
 ### Authentication patterns
 
 | Pattern | How to initialize | Use case |
@@ -530,6 +548,21 @@ Auth types supported: Catalyst built-in auth, Zoho accounts, custom SSO.
 
 **For long-running AppSail services:** Use admin credentials for server-to-server calls.
 Admin tokens are generated per-request and don't expire mid-operation.
+
+> **DataStore permissions and App Users:** By default, the App User role has **Read-only** access to DataStore tables. Insert, Update, and Delete operations will return `"No privileges to perform this action"` even when the user is authenticated. Fix this in one of two ways:
+> 1. **Console (recommended for most apps):** Data Store → select table → Permissions → enable Read, Insert, Update, Delete for the "App User" role. Repeat for each table.
+> 2. **Admin-scoped SDK in backend:** Use `catalyst.initialize(req, { type: catalyst.credential.admin })` for DataStore operations. Still use user-scoped SDK (`catalyst.initialize(req)`) to call `getCurrentUser()` for authentication verification.
+>
+> ```javascript
+> // Verify auth with user-scoped SDK
+> const catalystApp = catalyst.initialize(req);
+> const currentUser = await catalystApp.userManagement().getCurrentUser();
+>
+> // Perform DataStore ops with admin-scoped SDK
+> const adminApp = catalyst.initialize(req, { type: catalyst.credential.admin });
+> const dataStore = adminApp.datastore();
+> const zcql = adminApp.zcql();
+> ```
 
 **Cross-project API calls:** Use Connections to authenticate between Catalyst projects
 or between Catalyst and external Zoho services. Connections handle token refresh automatically.

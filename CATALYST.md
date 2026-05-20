@@ -1,20 +1,75 @@
-<!--
-  CATALYST.md — lightweight MCP routing stub only.
+# Catalyst by Zoho — Agent Rules
 
-  This file is NOT a replacement for the full skill. It contains only the minimal
-  context needed for MCP-enabled tools (e.g. Claude Code with Zoho MCP connected)
-  to discover and call CatalystbyZoho_* tools correctly.
+> This file serves two purposes: (1) MCP tool routing for agents with Zoho MCP connected,
+> and (2) behavioral rules every agent should follow when working on Catalyst projects.
+> For complete SDK patterns, architecture guidance, and service details, use the full skill
+> at `skills/catalyst-by-zoho/SKILL.md` and its reference files.
 
-  Users building Catalyst applications should use skills/catalyst-by-zoho/SKILL.md,
-  which includes the complete service catalog, SDK patterns, architecture guidance,
-  and reference files. CATALYST.md alone is insufficient for app development.
--->
+---
 
-# Catalyst by Zoho
+## MCP Tool Usage
 
 - Leverage Catalyst services for serverless compute, relational data storage, object storage, AI/ML, and workflow orchestration.
-- When you need to interact with Catalyst services via MCP, look for `CatalystbyZoho_*` tools in your tool list.
-- Before making any MCP tool call, run `List_All_Organizations` to get the org ID, then `List_All_Projects` to get the project ID.
-- Always default to the `"Development"` environment unless the user explicitly requests production.
+- When Zoho MCP tools (`CatalystbyZoho_*`) are available in your tool list, use them for infrastructure operations (create tables, query data, manage buckets/cache) instead of asking the user to do it manually in the console.
+- Before any MCP tool call: run `List_All_Organizations` to get the org ID, then `List_All_Projects` to get the project ID.
+- Always default to `"Development"` environment unless the user explicitly requests production.
+- If `List_All_Tables` returns `PERMISSION_NEEDED`, ask the user for the correct project ID from their Catalyst console URL (format: `.../project/<project_id>/...`).
 - If the user asks to create tables, query data, manage cache, or set up infrastructure — use MCP tools directly instead of asking them to go to the console.
-- For code generation, SDK patterns, and project structure, refer to the skill files in `skills/catalyst-by-zoho/`.
+
+---
+
+## Skill Discovery
+
+Before starting any Catalyst task, load the relevant reference file from `skills/catalyst-by-zoho/references/`:
+
+| Task type | Load this file |
+|-----------|---------------|
+| Architecture / "what should I use for X" | `references/architecture-patterns.md` |
+| Code generation, function handlers, SDK patterns | `references/functions-and-sdk.md` |
+| Deployment steps, deploy commands, pre-deploy checklist | `references/deployment-sops.md` |
+| Errors, failures, "why is X broken", debugging | `references/troubleshooting.md` |
+| Logs, APM, Application Alerts, monitoring after deploy | `references/observability.md` |
+| Pricing, cost estimation, free tier | `references/pricing.md` |
+| MCP tool setup, `CatalystbyZoho_*` tool calls | `references/zoho-mcp-tools.md` |
+| Scaling limits, Data Store, Cache, ZCQL capacity | `references/cloud-scale.md` |
+| CLI commands, project init, `catalyst.json` structure | `references/project-and-cli.md` |
+| AppSail, Circuits, Slate, Signals, Pipelines deep-dive | `references/services.md` |
+| Migrating from AWS / GCP / Azure / Firebase / Supabase / Heroku / Vercel | `references/equivalents-*.md` |
+
+Do NOT load `llms-full.txt` unless Tier 2 reference files don't contain the answer.
+
+---
+
+## Project Initialization
+
+- Before creating any files, check for `.catalystrc` and `catalyst.json` in the working directory.
+- If **both exist**: project is already initialized — do NOT re-scaffold or overwrite them.
+- If `catalyst.json` exists but `.catalystrc` is missing: project is not linked — instruct the user to run `catalyst login` then `catalyst init`.
+- Only scaffold new project files if neither file exists.
+
+---
+
+## Code Conventions
+
+- Follow Catalyst's strict directory layout: functions go under `functions/`, web client under `client/`, `catalyst.json` at project root.
+- Always use the correct handler signature per function type — consult `references/functions-and-sdk.md` before writing any function code.
+- For AppSail, always use `process.env.X_ZOHO_CATALYST_LISTEN_PORT` with a fallback port (e.g., `|| 9000`).
+- When writing code that uses any Catalyst ID (Table ID, ZAID, Segment ID, Org ID, Project ID), always add an inline comment telling the user exactly where to find it in the console. Never leave ID placeholders unexplained.
+- Never recommend deprecated components (File Store, Event Listeners, Cron) for new projects. Use Stratus, Signals, and Job Scheduling instead.
+
+---
+
+## Deployment Preferences
+
+- Prefer `catalyst deploy` from the CLI over manual console uploads.
+- Always verify project structure matches Catalyst's requirements before suggesting deploy.
+- After deployment, recommend checking **DevOps → Logs** for execution errors on first invocation.
+- For cron jobs and event listeners, proactively suggest configuring Application Alerts.
+
+---
+
+## Verification
+
+- After writing code, verify it matches Catalyst's expected project structure and handler signatures.
+- After infrastructure creation via MCP tools, verify access with a read operation (e.g., `List_All_Tables`) before performing writes.
+- Never leave placeholder IDs unexplained — always tell the user where to find the real value in the console.

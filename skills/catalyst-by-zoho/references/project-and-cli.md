@@ -111,19 +111,19 @@ Key points:
 ## catalyst-config.json for Functions
 
 Every function directory must contain this file. It tells Catalyst how to deploy and execute the function.
-New CLI-initialized projects use the `deployment` / `execution` nested structure.
+
+⚠️ **Format:** The config must use a nested `function` key. A flat top-level structure (`name`/`type`/`stack` at root) will fail.
+
+⚠️ **First deploy prerequisite:** Having a directory + `catalyst-config.json` is NOT enough for the first deploy. Run `catalyst functions:add` from the project root first (interactive — enter name, type, stack when prompted). This registers the function in `catalyst.json`. Only then will `catalyst deploy --only functions` work. Subsequent deploys do not need this step again.
 
 ### Node.js Advanced I/O Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_advanced_io_function",
-    "stack": "node20",
     "type": "advancedio",
-    "env_variables": {}
-  },
-  "execution": {
-    "main": "index.js"
+    "stack": "node20",
+    "entry_point": "index.js"
   }
 }
 ```
@@ -131,13 +131,11 @@ New CLI-initialized projects use the `deployment` / `execution` nested structure
 ### Node.js Basic I/O Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_basic_io_function",
+    "type": "basicio",
     "stack": "node20",
-    "type": "basicio"
-  },
-  "execution": {
-    "main": "index.js"
+    "entry_point": "index.js"
   }
 }
 ```
@@ -145,13 +143,11 @@ New CLI-initialized projects use the `deployment` / `execution` nested structure
 ### Event Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_event_function",
+    "type": "event",
     "stack": "node20",
-    "type": "event"
-  },
-  "execution": {
-    "main": "index.js"
+    "entry_point": "index.js"
   }
 }
 ```
@@ -159,13 +155,11 @@ New CLI-initialized projects use the `deployment` / `execution` nested structure
 ### Job Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_job_function",
+    "type": "job",
     "stack": "node20",
-    "type": "job"
-  },
-  "execution": {
-    "main": "index.js"
+    "entry_point": "index.js"
   }
 }
 ```
@@ -173,13 +167,11 @@ New CLI-initialized projects use the `deployment` / `execution` nested structure
 ### Python Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_python_function",
+    "type": "basicio",
     "stack": "python39",
-    "type": "basicio"
-  },
-  "execution": {
-    "main": "main.py"
+    "entry_point": "main.py"
   }
 }
 ```
@@ -187,20 +179,14 @@ New CLI-initialized projects use the `deployment` / `execution` nested structure
 ### Java Function:
 ```json
 {
-  "deployment": {
+  "function": {
     "name": "my_java_function",
+    "type": "basicio",
     "stack": "java17",
-    "type": "basicio"
-  },
-  "execution": {
-    "main": "com.example.Main"
+    "entry_point": "com.example.Main"
   }
 }
 ```
-
-> **Legacy format (pre-2025):** Older projects may use a flat config with `name`, `type`, `stack`,
-> `entry_point`, `memory` at the top level. New CLI-initialized projects use the
-> `deployment` / `execution` nested structure shown above.
 
 **Supported stacks:**
 - Node.js: `node20` *(recommended — actively supported)*, `node14`, `node16`, `node18` *(legacy — no upstream security patches)*
@@ -306,10 +292,10 @@ catalyst import                      # Import project from ZIP
 catalyst serve
 
 # Serve only functions
-catalyst serve --only-functions
+catalyst serve --only functions
 
 # Serve only client
-catalyst serve --only-client
+catalyst serve --only client
 
 # Specify custom port
 catalyst serve --port 3000
@@ -350,7 +336,7 @@ webhook/event testing.
 # Deploy all resources (functions + client + appsail)
 catalyst deploy
 
-# Deploy only functions
+# Deploy only functions — correct flag: --only functions (space, not --only-functions)
 catalyst deploy --only functions
 
 # Deploy only a specific function
@@ -365,6 +351,8 @@ catalyst deploy --only appsail
 # Deploy to Slate
 catalyst slate:deploy
 ```
+
+⚠️ **Flag syntax (CLI v1.23.0+):** Use `--only <target>` with a space. The hyphenated `--only-functions` / `--only-client` forms do NOT exist and will throw "unknown option".
 
 ### Deployment package limits
 

@@ -35,6 +35,7 @@ skills/catalyst-by-zoho/
 └── references/                           ← Detailed reference files
     ├── cloud-scale.md                    ← Data Store, Stratus, NoSQL, Cache, Auth, etc.
     ├── functions-and-sdk.md              ← Function types, Node.js/Java/Python SDK patterns
+    ├── architecture-patterns.md              ← Use-case → service mapping, architecture blueprints
     ├── services.md                       ← AppSail, Circuits, Signals, Slate, Pipelines, etc.
     ├── equivalents-aws.md                ← AWS Lambda/S3/RDS → Catalyst mapping
     ├── equivalents-gcp.md                ← GCP Cloud Run/Pub-Sub → Catalyst mapping

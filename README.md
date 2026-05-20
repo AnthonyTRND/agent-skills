@@ -104,7 +104,39 @@ Alternatively, copy the `.cursor-plugin/` and `skills/` folders into your projec
    ```
 2. Copy `skills/catalyst-by-zoho/` into your project's `.windsurfrules/` directory
 
-### Option 6: Any other AI tool (Manual)
+### Option 6: OpenAI Codex
+
+1. Install the skill as a plugin:
+   ```bash
+   codex plugin marketplace add catalystbyzoho/agent-skills
+   ```
+2. Open Codex and run `/plugins` to verify `catalyst-by-zoho` appears in the active list.
+3. Add your Zoho MCP server URL to Codex's MCP settings (see **Zoho MCP setup** below).
+
+### Option 7: Kiro
+
+1. Clone the repo (if you haven't already):
+   ```bash
+   git clone https://github.com/catalystbyzoho/agent-skills.git
+   ```
+2. Symlink the skill into Kiro's steering directory:
+   ```bash
+   ln -s "$(pwd)/agent-skills/skills/catalyst-by-zoho" ~/.kiro/steering/catalyst-by-zoho
+   ```
+3. Add your Zoho MCP server to Kiro's MCP config (`~/.kiro/settings/mcp.json`):
+   ```json
+   {
+     "mcpServers": {
+       "zoho-catalyst": {
+         "url": "https://<your-server>-<org>.zohomcp.com/mcp/<token>/message",
+         "type": "http"
+       }
+     }
+   }
+   ```
+4. Restart Kiro — the skill and MCP tools will be available in new conversations.
+
+### Option 8: Any other AI tool (Manual)
 
 1. Clone the repo:
    ```bash

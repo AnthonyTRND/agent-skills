@@ -57,6 +57,10 @@ Detailed, focused docs. **Load a file ONLY when the user's query clearly require
 | `references/meta-ids.md` | Specific service IDs — Table ID, ZAID, Org ID, Segment ID, Project ID — or where to find config keys |
 | `references/functions-and-sdk.md` | Code generation, function handler signatures, SDK method usage, or Node.js/Java/Python patterns |
 | `references/project-and-cli.md` | CLI commands, project initialization, deployment steps, or `catalyst.json` / directory structure |
+| `references/deployment-sops.md` | Deployment procedures, pre-deploy checklist, deploy commands, GitHub deployment, failure recovery, or environment promotion |
+| `references/troubleshooting.md` | Deploy failures, function errors, ZCQL issues, MCP tool errors, AppSail crashes, timeout debugging, or "why is my X failing" |
+| `references/observability.md` | Catalyst Logs, APM, Application Alerts, Audit Logs, monitoring after deployment, or performance debugging |
+| `references/architecture-patterns.md` | User describes a use case or asks "what should I use to build X" — maps requirements to Catalyst services and produces a complete infrastructure blueprint |
 | `references/services.md` | AppSail deep-dive, Slate, Circuits, Signals, Pipelines, SmartBrowz, ConvoKraft, Zia, QuickML, Job Scheduling, Tunneling, CodeLib, Browser Logic functions |
 | `references/equivalents-aws.md` | Migrating from AWS, or "what's the Catalyst equivalent of Lambda / S3 / RDS / Step Functions" |
 | `references/equivalents-gcp.md` | Migrating from GCP, or "what's the Catalyst equivalent of Cloud Run / Pub-Sub / Firestore" |
@@ -84,7 +88,7 @@ Only load `llms-full.txt` when ALL of the following conditions are true:
 Only if grep + targeted reads are still insufficient should you consider reading larger sections — and before doing so, warn the user:
 > "This requires loading a large portion of the full documentation (~11MB). This will consume significant tokens."
 
-**Do NOT load `llms-full.txt` for:** routine code generation, architecture questions, CLI usage, pricing, SDK patterns, or anything the Tier 1 or Tier 2 files already cover.
+**Do NOT load `llms-full.txt` for:** routine code generation, architecture questions, CLI usage, pricing, SDK patterns, troubleshooting common errors, deployment procedures, observability, or anything the Tier 1 or Tier 2 files already cover.
 
 Always read the relevant reference file(s) before writing code. If the request spans multiple areas (e.g.
 "write a Catalyst function that queries Data Store and stores results in Stratus"), read all applicable
@@ -166,61 +170,30 @@ the console. Event Listeners and Cron require manual migration of business logic
 
 Users who signed up after August 27, 2025 cannot even see or access these deprecated components.
 
-## Catalyst service catalog (complete)
+## Catalyst service catalog (quick reference)
 
-### Compute (Serverless)
-- **Functions** — 7 types: Basic I/O, Advanced I/O, Event, Cron, Integration, Job, Browser Logic.
-  Node.js (20); legacy projects: 14/16/18 (upstream EOL — no security patches). Java (8/11/17), Python (3.9 — only supported version). Memory: 128–1024 MB.
-- **AppSail** — PaaS for persistent servers and full applications. Managed Node.js/Java/Python runtimes or custom Docker; 1–5 auto-scaling instances, 256–2048 MB.
+For deep-dive details on any service, load the appropriate Tier 2 reference file.
 
-### Data & Storage (Cloud Scale)
-- **Data Store** — Managed relational database with system columns (ROWID, CREATORID, CREATEDTIME,
-  MODIFIEDTIME). Access via SDK or ZCQL. Max 300 rows per query.
-- **ZCQL** — Catalyst's query language. SQL-like, case-sensitive, single-quote strings, 300-row LIMIT.
-- **Stratus** — S3-compatible object storage (PREFERRED). Buckets, objects, versioning, encryption,
-  PII/ePHI compliance, multipart upload, malware scanning, custom permissions.
-- **NoSQL** — Document database. Collections, documents, nested objects, query-by-field.
-- **Cache** — In-memory cache. Segments, string values only, max 48-hour TTL, max 5MB per value.
-- **Search** — Full-text search across Data Store tables. Enable per-column in console.
-- ~~**File Store**~~ — DEPRECATED (removal date TBD). Use Stratus instead.
+| Category | Services | Details in |
+|----------|----------|-----------|
+| **Compute** | Functions (7 types: Basic I/O, Advanced I/O, Event, Cron, Integration, Job, Browser Logic); Node.js 20, Java 8/11/17, Python 3.9; 128–1024 MB memory | `references/functions-and-sdk.md` |
+| **Compute** | AppSail — PaaS for persistent servers; managed Node.js/Java/Python runtimes or custom Docker; 1–5 auto-scaling instances; 256–2048 MB | `references/services.md` |
+| **Storage** | Data Store (relational, ZCQL, max 300 rows/query); Stratus (S3-compatible, PREFERRED over ~~File Store~~); NoSQL (document DB); Cache (string-only, max 48hr TTL, max 5MB/value); Search (full-text, per-column) | `references/cloud-scale.md` |
+| **Frontend** | Slate — Git-based, SSR, preview deploys (PREFERRED); Web Client Hosting — legacy `client/` dir | `references/services.md` |
+| **Integration** | Signals — managed event bus, Zoho ecosystem (PREFERRED over ~~Event Listeners~~); Connections — OAuth token manager, auto-refresh | `references/services.md` |
+| **Orchestration** | Circuits — visual workflow, approvals, saga patterns; Job Scheduling — background jobs (PREFERRED over ~~Cron~~); Pipelines — YAML CI/CD | `references/services.md` |
+| **AI / ML** | Zia Services — vision + text analytics microservices; QuickML — no-code AutoML + LLM/VLM; ConvoKraft — AI chatbot builder | `references/services.md` |
+| **Browser** | SmartBrowz — managed headless browser; scraping, screenshots, PDF generation | `references/services.md` |
+| **DevOps** | Logs, APM, Application Alerts, GitHub auto-deploy integration | `references/observability.md` |
+| **Auth & Security** | Auth & User Management — built-in auth, Zoho accounts, SSO; API Gateway — routing, rate limiting, CORS | `references/cloud-scale.md` |
+| **Communication** | Mail (domain verification required); Push Notifications (APNs + FCM) | `references/cloud-scale.md` |
+| **Developer Tools** | CLI (`zcatalyst-cli`), SDKs (Node.js/Java/Python + Web/Android/iOS/Flutter), REST APIs, VS Code Extension, CodeLib, Zia AI Assistant, Tunneling | `references/functions-and-sdk.md`, `references/project-and-cli.md` |
 
-### Frontend & Hosting
-- **Slate** — Git-based frontend deployment with SSR and preview deployments (PREFERRED). Supersedes Web Client Hosting for all new projects.
-- **Web Client Hosting** — Legacy frontend via `client/` directory. Use Slate for new projects.
-
-### Integration & Events
-- **Signals** — Managed event bus for Zoho product integration and event-driven architectures (PREFERRED). Replaces deprecated Event Listeners.
-- **Connections** — OAuth token manager. Auto-refresh, pre-built Zoho connectors.
-- ~~**Event Listeners**~~ — DEPRECATED (removal date TBD). Use Signals instead.
-
-### Workflow & Orchestration
-- **Circuits** — Visual drag-and-drop workflow orchestration for multi-step processes, approvals, and saga patterns.
-- **Job Scheduling** — Background jobs. Job pools, scheduled or on-demand, multiple target types.
-- ~~**Cron**~~ — DEPRECATED (removal date TBD). Use Job Scheduling instead.
-
-### AI & Machine Learning
-- **Zia Services** — AI/ML microservices for vision (OCR, face detection, object detection, image moderation), text analytics, and AutoML.
-- **QuickML** — No-code ML pipeline builder with AutoML, LLM/VLM token support.
-- **ConvoKraft** — AI-powered conversational bots with web embedding.
-
-### Browser Automation
-- **SmartBrowz** — Managed headless browser. Scraping, screenshots, PDF generation, Puppeteer-like API.
-
-### DevOps & CI/CD
-- **Pipelines** — YAML-based CI/CD with GitHub/GitLab/Bitbucket integration.
-- **DevOps** — Logs, APM, Application Alerts, GitHub integration for auto-deploy.
-
-### Security & Identity
-- **Auth & User Management** — Built-in auth, Zoho accounts, custom SSO, Web SDK auth flow.
-- **API Gateway** — Path-based routing, rate limiting, CORS, auth enforcement.
-
-### Communication
-- **Mail** — Email sending (domain verification required).
-- **Push Notifications** — Mobile/web (APNs + FCM setup required).
-
-### Developer Tools
-- **CLI** (`zcatalyst-cli`), **SDKs** (Node.js/Java/Python + Web/Android/iOS/Flutter), **REST APIs**,
-  **VS Code Extension** (Catalyst Tools), **CodeLib**, **Zia AI Assistant**, **Tunneling**.
+**Deprecated — never recommend for new projects:**
+- ~~File Store~~ → use **Stratus**
+- ~~Event Listeners~~ → use **Signals**
+- ~~Cron~~ → use **Job Scheduling**
+- Users who signed up after Aug 27, 2025 cannot access deprecated components.
 
 ## Quick reference: Function handler signatures (Node.js)
 
@@ -231,19 +204,24 @@ module.exports = (catalystApp, context, basicIO) => {
   basicIO.write("Response string");
 };
 
-// Advanced I/O — full HTTP (any method)
-// NEW signature (CLI-initialized projects, node20+):
+// Advanced I/O — full HTTP (any method), node20: raw http.ServerResponse (NOT Express)
+// Use sendJson() + getBody() helpers — res.status/res.json do NOT exist
 'use strict';
 const catalyst = require('zcatalyst-sdk-node');
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
 module.exports = async (req, res) => {
   const catalystApp = catalyst.initialize(req);
-  res.status(200).json({ message: "Hello" });
+  sendJson(res, 200, { message: "Hello" });
 };
 
 // LEGACY signature (older projects, node14/16/18):
 // module.exports = (catalystApp, context, req, res) => {
-//   res.status(200).json({ message: "Hello" });
+//   sendJson(res, 200, { message: "Hello" });
 // };
 
 // Event — triggered by Signals/Event Listeners
@@ -295,15 +273,23 @@ const pushNotif = catalystApp.pushNotification();
 ## Quick reference: CLI commands
 
 ```bash
-npm install -g zcatalyst-cli          # Install CLI (requires Node.js v20)
+npm install -g zcatalyst-cli          # Install CLI (requires Node.js v14+)
 catalyst login                        # Login to Zoho account
 catalyst init                         # Initialize project
-catalyst serve                        # Local testing
-catalyst deploy                       # Deploy to Development environment
+catalyst functions:add                # Register a new function (INTERACTIVE — no flags, prompts for name/type/stack)
+catalyst serve                        # Local testing (all resources)
+catalyst serve --only functions       # Local testing — functions only
+catalyst deploy                       # Deploy all resources to Development
+catalyst deploy --only functions      # Deploy functions only
+catalyst deploy --only functions:crud_api  # Deploy a single named function
 catalyst functions:shell              # Test functions in Node shell
 catalyst slate:init                   # Initialize Slate frontend
 catalyst slate:deploy                 # Deploy frontend via Slate
 ```
+
+⚠️ **CLI flag gotcha (v1.23.0+):** The deploy/serve scoping flag is `--only <target>` with a space — NOT `--only-functions`. Hyphenated form does not exist and throws "unknown option". Valid targets: `functions`, `client`, `appsail`, `functions:<name>` for a single function.
+
+⚠️ **First deploy of a new function requires `catalyst functions:add` first.** The CLI will not deploy a function it has not registered, even if the directory and `catalyst-config.json` exist. Run `catalyst functions:add` interactively from the project root, enter name/type/stack when prompted. After it completes, `catalyst.json` will contain a `functions` array with the registered entry.
 
 ## Architectural decision guide
 
@@ -323,7 +309,10 @@ catalyst slate:deploy                 # Deploy frontend via Slate
 
 ## Important gotchas
 
-- **catalyst.json is auto-generated** — never create manually; use `catalyst init`
+- **catalyst.json is auto-generated** — never create manually; use `catalyst init`. After `catalyst functions:add` it gains a `functions` array — do not add this manually
+- **`catalyst functions:add` is required before first deploy** — a function directory + `catalyst-config.json` alone is not enough; the CLI must register it interactively first. Run from project root, answer name/type/stack prompts
+- **Deploy flag is `--only functions` (with space)** — NOT `--only-functions`. Hyphenated form throws "unknown option" in CLI v1.23.0+. Single function: `--only functions:<name>`
+- **`catalyst-config.json` uses nested `function` key** — correct format is `{"function":{"name":"...","type":"...","stack":"...","entry_point":"..."}}`. A flat top-level structure without the `function` wrapper will fail
 - **Function memory defaults to 128MB** — increase in catalyst-config.json (max 1024MB)
 - **Cold starts exist** — keep packages minimal
 - **ZCQL table/column names are case-sensitive** — must match console exactly
@@ -335,8 +324,9 @@ catalyst slate:deploy                 # Deploy frontend via Slate
 - **Integration Functions NOT available** in EU, AU, IN, or CA data centers
 - **CLI always deploys to Development** — production deployment via web console only
 - **New users after Aug 27, 2025** cannot access File Store, Event Listeners, or Cron — these services are deprecated (originally scheduled for removal April 30, 2026 — still functional with deprecation warnings, removal date TBD)
-- **Only node20 is actively supported** — node14, 16, and 18 still work for legacy projects but receive no upstream security patches.
-- **ZCQL results are wrapped in a table-named key** — `executeZCQLQuery` returns `[{ tablename: { ROWID: ..., col: ... } }]`. Always unwrap: `result.map(r => r.TableName)`. The key matches the table name as defined in the console (case-sensitive).
+- **DataStore table permissions default to Read-only for App Users** — Insert, Update, and Delete must be explicitly enabled per table in the console (Data Store → table → Permissions → App User role). Without this, backend functions using user-scoped SDK (`catalyst.initialize(req)`) will get `"No privileges to perform this action"` even for authenticated users. Fix: enable CRUD in console, or use admin-scoped SDK for DataStore operations: `catalyst.initialize(req, { type: catalyst.credential.admin })`.
+- **Web client → function fetch must include `credentials: 'include'`** — without it, auth cookies are not forwarded and `getCurrentUser()` throws with 401, even when both web client and function are on the same Catalyst domain.
+- **Only node20 is actively supported** — node14, 16, and 18 still work for legacy projects but receive no upstream security patches. — `executeZCQLQuery` returns `[{ tablename: { ROWID: ..., col: ... } }]`. Always unwrap: `result.map(r => r.TableName)`. The key matches the table name as defined in the console (case-sensitive).
 - **CREATEDTIME timezone trap** — Catalyst stores CREATEDTIME in the project's configured timezone (e.g. IST) WITHOUT an offset marker. Passing the raw string to `new Date()` treats it as UTC, producing timestamps that are hours off. Always append the project timezone offset before parsing.
 - **Data Store does NOT support emoji / 4-byte UTF-8** — Inserting emoji or 4-byte UTF-8 characters (many CJK extensions) silently stores them as `?`. Workaround: store a string key (e.g. `"happy"`) and map to emoji in application code.
 - **AppSail + Slate cross-origin issue** — In development, Slate-hosted frontends calling AppSail APIs get blocked by Catalyst's auth layer (manifests as "Unable to Fetch" or "Failed to fetch"). Fix: serve the frontend from AppSail itself using `express.static()` so all calls are same-origin. This eliminates CORS and auth-layer issues entirely.
