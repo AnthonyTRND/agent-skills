@@ -109,14 +109,42 @@ Do not load multiple equivalents files unless the user's query explicitly spans 
 add an inline comment telling the user exactly where to find it in the console. Never leave ID
 placeholders unexplained. Read `references/meta-ids.md` if you need to reference specific ID locations.
 
+## ⚠️ Pre-flight: Always verify project state BEFORE generating code
+
+**STOP. Before writing ANY code, creating ANY files, or suggesting ANY architecture — you MUST check the project state first.** This is non-negotiable.
+
+Run these checks (use filesystem tools, terminal, or ask the user):
+
+```
+CHECK 1: Does .catalystrc exist in the working directory?
+CHECK 2: Does catalyst.json exist in the working directory?
+CHECK 3: Does a functions/ directory exist? If so, what functions are already registered?
+```
+
+**Decision tree:**
+
+| .catalystrc | catalyst.json | What this means | Your action |
+|-------------|---------------|-----------------|-------------|
+| ✅ exists | ✅ exists | Project is initialized and linked | Proceed — read both files to understand project name, ID, existing functions |
+| ❌ missing | ✅ exists | Project created but not linked to Zoho account | Tell user: run `catalyst login` then `catalyst init` to link. Do NOT generate code yet |
+| ❌ missing | ❌ missing | No Catalyst project here | Tell user: run `catalyst login` then `catalyst init` to create a project. Do NOT generate code yet |
+| ✅ exists | ❌ missing | Corrupted state | Tell user: run `catalyst init` to regenerate `catalyst.json` |
+
+**If the project does not exist yet:**
+1. Inform the user they need to create the project first
+2. Provide the exact commands: `catalyst login` → `catalyst init`
+3. Explain they'll be prompted to select/create a project in the Catalyst console
+4. WAIT for them to confirm it's done before generating any code
+5. Only after `.catalystrc` and `catalyst.json` exist should you proceed
+
+**Why this matters:** Catalyst IDs (Project ID, environment, ZAID) are assigned during project creation. Code generated without these will use placeholder IDs that fail on deploy. The project structure (`functions/`, `client/`) is created by `catalyst init` — generating files outside this structure breaks deployment.
+
+---
+
 ## Core principles
 
-1. **Check project initialization state before acting.** Before creating any files or suggesting
-   `catalyst init`, inspect the working directory for `.catalystrc` and `catalyst.json`. If both
-   exist, the project is already initialized — do not overwrite or recreate them. If `catalyst.json`
-   exists but `.catalystrc` is missing, the project is not yet linked to Zoho — instruct the user to
-   run `catalyst login` then `catalyst init`. Only if neither file exists should you scaffold new
-   project files and guide the user through initialization.
+1. **Check project initialization state before acting.** (See Pre-flight section above — this is your
+   first action for ANY Catalyst task, no exceptions.)
 
 2. **Follow Catalyst's exact project structure.** Catalyst is strict about directory layout. Functions go
    under `functions/`, the web client goes under `client/`, and `catalyst.json` sits at the project root.

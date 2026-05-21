@@ -53,8 +53,11 @@ back to providing step-by-step Catalyst console instructions instead.
 > so the system maintains proper user-level attribution and access control.
 
 ### Step 3: Connect the MCP server to their LLM client
-The user needs to add the MCP server's authenticated URL to their LLM client configuration
+The user needs to add the MCP server's URL to their LLM client configuration
 (e.g., `mcp.json` for Claude Desktop, or the MCP settings in claude.ai).
+
+**Where to find the URL:** In the MCP server → **Connect tab** → **Server URL** field.
+Copy the full URL (format: `https://<server>-<org>.zohomcp.com/mcp/<token>/message`).
 
 ### Verification prompt
 Once setup is done, ask the user to confirm by running:

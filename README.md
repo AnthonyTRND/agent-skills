@@ -151,7 +151,7 @@ To let the AI manage Catalyst infrastructure (create tables, query data, manage 
 1. Create a Zoho MCP server at [mcp.zoho.com](https://mcp.zoho.com)
 2. Add **"Catalyst by Zoho"** tools to the server
 3. Enable **"On Demand"** authorization (not "Authorization via Connection")
-4. Copy your MCP server URL (format: `https://<server>-<org>.zohomcp.com/mcp/<token>/message`)
+4. Copy your MCP server URL — go to the **Connect tab** → **Server URL** field (format: `https://<server>-<org>.zohomcp.com/mcp/<token>/message`)
 5. Add it to your tool's MCP config, or update the `<YOUR_ZOHO_MCP_URL>` placeholder in `.mcp.json`
 
 > **Note:** `.mcp.json` ships with a placeholder URL. See the `_setup` field inside for instructions.
