@@ -42,7 +42,7 @@ AppSail crashes, Circuits failures, cron problems, or API Gateway errors.
 - **Recovery — Sync Now** — If a deployment fails, use the "Sync Now" feature in the Catalyst
   console to merge the latest Git commit to the current deployment. You can also rollback to a
   previous successful deployment from the console.
-  CLI: `catalyst deploy slate` or `catalyst deploy --only slate:appname`
+  CLI: `catalyst deploy slate` (all apps) or `catalyst deploy --only slate:appname` (specific app)
 
 ### GitHub-based deployment fails
 - Repository must contain resources in standard Catalyst project directory format.

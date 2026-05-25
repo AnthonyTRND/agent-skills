@@ -270,10 +270,15 @@ catalyst data:status                 # Check import/export status
 
 ### Slate
 ```bash
-catalyst slate:init                  # Initialize Slate app
-catalyst slate:create                # Create new Slate app
-catalyst slate:link                  # Link existing Slate app
-catalyst slate:unlink                # Unlink Slate app
+catalyst init slate                  # Initialize Slate service in project (interactive)
+catalyst slate:create                # Add another Slate app to existing project (interactive)
+catalyst slate:link                  # Link existing local dir to Slate service (interactive)
+catalyst slate:unlink                # Unlink a Slate app
+catalyst serve --only slate          # Serve Slate app locally
+catalyst deploy slate                # Deploy all Slate apps to Development
+catalyst deploy slate -m "message"   # Deploy with a deployment message
+catalyst deploy --only slate:appname # Deploy a specific Slate app
+catalyst deploy slate --production   # Deploy to Production
 ```
 
 ### Pull & Export/Import
@@ -348,8 +353,8 @@ catalyst deploy --only client
 # Deploy only AppSail
 catalyst deploy --only appsail
 
-# Deploy to Slate
-catalyst slate:deploy
+# Deploy to Slate (replace 'appname' with your Slate app name)
+catalyst deploy --only slate:appname
 ```
 
 ⚠️ **Flag syntax (CLI v1.23.0+):** Use `--only <target>` with a space. The hyphenated `--only-functions` / `--only-client` forms do NOT exist and will throw "unknown option".

@@ -346,11 +346,15 @@ Web Client Hosting with modern Git-based workflows and native framework support.
 
 ### CLI workflow
 ```bash
-catalyst slate:init                  # Initialize Slate in project
-catalyst slate:create                # Create a new Slate app
-catalyst slate:link                  # Link to existing Slate app
-catalyst slate:unlink                # Unlink Slate app
-catalyst slate:deploy                # Deploy to Slate
+catalyst init slate                  # Initialize Slate service in project (interactive)
+catalyst slate:create                # Add another Slate app to existing project (interactive)
+catalyst slate:link                  # Link existing local dir to Slate service (interactive)
+catalyst slate:unlink                # Unlink a Slate app
+catalyst serve --only slate          # Serve Slate app locally
+catalyst deploy slate                # Deploy all Slate apps to Development
+catalyst deploy slate -m "message"   # Deploy with a deployment message  
+catalyst deploy --only slate:appname # Deploy a specific Slate app
+catalyst deploy slate --production   # Deploy to Production
 ```
 
 ### Supported frameworks

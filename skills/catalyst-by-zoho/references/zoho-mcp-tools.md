@@ -300,7 +300,7 @@ Tool: Delete_Cron_Job
 | Upload files to Stratus | ❌ Needs signed URL workaround | ✅ Direct upload | ✅ Via code |
 | Deploy functions | ❌ Not supported | ✅ Works | ✅ Best — `catalyst deploy` |
 | Configure Signals/rules | ❌ Not supported | ✅ Required | ❌ Not supported |
-| Set up Slate frontend | ❌ Not supported | ✅ Initial setup | ✅ `catalyst slate:deploy` |
+| Set up Slate frontend | ❌ Not supported | ✅ Initial setup | ✅ `catalyst deploy slate` |
 | Manage cache entries | ✅ Full CRUD | ✅ Works | ❌ Not directly |
 | Run ZCQL queries | ✅ Best — interactive | ✅ Works | ❌ Not directly |
 | Create cron/scheduled jobs | ✅ Works | ✅ Works | ❌ Not directly |

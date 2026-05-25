@@ -167,8 +167,11 @@ CHECK 3: Does a functions/ directory exist? If so, what functions are already re
    no cross-type JOINs, max 300 rows per query, single quotes only for strings).
 
 7. **Always handle Catalyst's auth model.** Catalyst uses its own authentication system with user
-   management. Functions have Security Rules that control access (`no_auth`, `user_auth`,
-   `admin_auth`). Understand these when scaffolding new APIs.
+   management. Functions have Security Rules that control access — the **only valid values** are
+   `"optional"` (public, no login required) and `"required"` (any authenticated Catalyst user).
+   Values like `no_auth`, `user_auth`, and `admin_auth` **do not exist** and will throw
+   "Invalid input value". For admin-only route enforcement, use **API Gateway** (auth type on
+   the route), not Security Rules. Security Rules is a binary gate: public vs. authenticated.
 
 8. **Default to the modern stack.** For new projects, always prefer Slate over Web Client Hosting,
    Stratus over File Store, Signals over Event Listeners, and Job Scheduling over Cron. The legacy
@@ -311,9 +314,23 @@ catalyst deploy                       # Deploy all resources to Development
 catalyst deploy --only functions      # Deploy functions only
 catalyst deploy --only functions:crud_api  # Deploy a single named function
 catalyst functions:shell              # Test functions in Node shell
-catalyst slate:init                   # Initialize Slate frontend
-catalyst slate:deploy                 # Deploy frontend via Slate
+catalyst apig:enable                  # Enable API Gateway for the project
+catalyst apig:disable                 # Disable API Gateway
+catalyst apig:status                  # Check API Gateway enable status and schedule progress
+catalyst init slate                   # Initialize Slate service in a project (interactive)
+catalyst slate:create                 # Add another Slate app to existing project (interactive)
+catalyst slate:link                   # Link existing local dir to Slate service (interactive)
+catalyst slate:unlink                 # Unlink a Slate app
+catalyst serve --only slate           # Serve Slate app locally
+catalyst deploy slate                 # Deploy all Slate apps to Development
+catalyst deploy slate -m "message"    # Deploy with a deployment message
+catalyst deploy --only slate:appname  # Deploy a specific Slate app
+catalyst deploy slate --production    # Deploy to Production environment
 ```
+
+⚠️ **API Gateway CLI prefix is `apig:`, NOT `api-gateway:`.** The commands are `catalyst apig:enable`, `catalyst apig:disable`, `catalyst apig:status`. Using `api-gateway:enable` throws "unknown command".
+
+⚠️ **Slate CLI deploy workflow:** Run `catalyst init slate` (or `catalyst slate:link` for existing apps) first to link the directory, then `catalyst deploy slate` to push. No Git repo required for CLI-based deploy.
 
 ⚠️ **CLI flag gotcha (v1.23.0+):** The deploy/serve scoping flag is `--only <target>` with a space — NOT `--only-functions`. Hyphenated form does not exist and throws "unknown option". Valid targets: `functions`, `client`, `appsail`, `functions:<name>` for a single function.
 
