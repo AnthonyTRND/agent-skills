@@ -44,7 +44,7 @@ Sufficient for: general questions, architecture recommendations, deprecation che
 ### Tier 2 — Reference files (read on demand)
 Detailed, focused docs. **Load a file ONLY when the user's query clearly requires it. Do not load files speculatively or as a precaution.**
 
-> **Path note:** Paths below are relative to this file's location (`skills/catalyst-by-zoho/`).
+> **Path note:** Paths below are relative to this file's location (`skills/`).
 > If this skill was installed via GitHub Copilot (copied into `.github/copilot-instructions.md`
 > with `references/` copied alongside it), all paths resolve as `.github/references/filename.md`.
 > Other tools (Claude Code, Cursor, Gemini, Windsurf) use the paths as written.

@@ -15,7 +15,7 @@ If the skill produces incorrect code, recommends deprecated services, or misses 
 ### Improving the skill
 
 1. Fork the repository
-2. Edit the `SKILL.md` or reference files in `skills/catalyst-by-zoho/references/`
+2. Edit the `SKILL.md` or reference files in `skills/references/`
 3. Test the updated skill by importing it into your AI tool
 4. Open a Pull Request with a clear description of what changed and why
 
@@ -30,7 +30,7 @@ If the skill produces incorrect code, recommends deprecated services, or misses 
 ### Skill folder structure
 
 ```
-skills/catalyst-by-zoho/
+skills/
 ├── SKILL.md                              ← Main skill file (triggers, context, quick reference)
 └── references/                           ← Detailed reference files
     ├── cloud-scale.md                    ← Data Store, Stratus, NoSQL, Cache, Auth, etc.

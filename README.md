@@ -77,7 +77,7 @@ Alternatively, copy the `.cursor-plugin/` and `skills/` folders into your projec
    ```bash
    git clone https://github.com/catalystbyzoho/agent-skills.git
    ```
-2. **Append** the contents of `skills/catalyst-by-zoho/SKILL.md` to your project's `.github/copilot-instructions.md` — do not replace the file if it already has content.
+2. **Append** the contents of `skills/SKILL.md` to your project's `.github/copilot-instructions.md` — do not replace the file if it already has content.
 
    > **Strip the frontmatter first.** `SKILL.md` starts with a YAML frontmatter block that `copilot-instructions.md` does not support. Remove everything between and including the opening and closing `---` lines before appending:
    > ```
@@ -91,10 +91,10 @@ Alternatively, copy the `.cursor-plugin/` and `skills/` folders into your projec
 
    Quick one-liner to append with frontmatter stripped:
    ```bash
-   awk '/^---/{f++; next} f>=2' skills/catalyst-by-zoho/SKILL.md >> .github/copilot-instructions.md
+   awk '/^---/{f++; next} f>=2' skills/SKILL.md >> .github/copilot-instructions.md
    ```
 
-3. Copy the `skills/catalyst-by-zoho/references/` folder into `.github/references/` for full context
+3. Copy the `skills/references/` folder into `.github/references/` for full context
 
 ### Option 5: Windsurf
 
@@ -102,7 +102,7 @@ Alternatively, copy the `.cursor-plugin/` and `skills/` folders into your projec
    ```bash
    git clone https://github.com/catalystbyzoho/agent-skills.git
    ```
-2. Copy `skills/catalyst-by-zoho/` into your project's `.windsurfrules/` directory
+2. Copy `skills/` into your project's `.windsurfrules/` directory
 
 ### Option 6: OpenAI Codex
 
@@ -142,7 +142,7 @@ Alternatively, copy the `.cursor-plugin/` and `skills/` folders into your projec
    ```bash
    git clone https://github.com/catalystbyzoho/agent-skills.git
    ```
-2. Point your AI tool to the `skills/catalyst-by-zoho/` directory, or copy its contents to wherever your tool reads skill/instruction files
+2. Point your AI tool to the `skills/` directory, or copy its contents to wherever your tool reads skill/instruction files
 
 ### Zoho MCP setup (recommended, all tools)
 
@@ -156,7 +156,7 @@ To let the AI manage Catalyst infrastructure (create tables, query data, manage 
 
 > **Note:** `.mcp.json` ships with a placeholder URL. See the `_setup` field inside for instructions.
 
-See `skills/catalyst-by-zoho/references/zoho-mcp-tools.md` for detailed setup and verification steps.
+See `skills/references/zoho-mcp-tools.md` for detailed setup and verification steps.
 
 ## What the skill enables
 
@@ -177,7 +177,7 @@ the minimal context needed for MCP-enabled tools (e.g. Claude Code with Zoho MCP
 to discover and invoke `CatalystbyZoho_*` tools correctly.
 
 **It is not a replacement for the full skill.** If you are building a Catalyst application,
-always use `skills/catalyst-by-zoho/SKILL.md` (and its `references/` folder), which includes
+always use `skills/SKILL.md` (and its `references/` folder), which includes
 the complete service catalog, SDK patterns, handler signatures, architecture guidance, and
 all reference docs. `CATALYST.md` alone is insufficient for app development.
 
