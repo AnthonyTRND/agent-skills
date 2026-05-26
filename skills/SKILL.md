@@ -69,6 +69,16 @@ Detailed, focused docs. **Load a file ONLY when the user's query clearly require
 | `references/equivalents-vercel-netlify.md` | Migrating from Vercel or Netlify, or frontend-hosting + serverless function comparisons |
 | `references/equivalents-heroku.md` | Migrating from Heroku, Railway, Render, or Fly.io (PaaS comparisons) |
 | `references/equivalents-supabase.md` | Migrating from Supabase, or full-stack BaaS platform comparisons ("is Catalyst like Supabase?") |
+| `references/sdk-nodejs.md` | Detailed Node.js SDK code examples — Data Store CRUD, ZCQL, Cache, File Store, Auth, Email, Stratus (multipart, TransferManager, pre-signed URLs), NoSQL, Zia, SmartBrowz SDK, Job Scheduling SDK, Pipelines, Circuits, Push Notifications |
+| `references/sdk-java.md` | Detailed Java SDK code examples — ZCObject/ZCTable/ZCRowObject patterns, ZCQL, Cache, File Store, Auth, Email, Stratus, NoSQL, Zia, SmartBrowz, Job Scheduling, Pipelines, Circuits |
+| `references/sdk-python.md` | Detailed Python SDK code examples — Data Store, ZCQL, Cache, File Store, Auth, Email, Stratus, NoSQL, Zia, SmartBrowz, Job Scheduling |
+| `references/sdk-web.md` | Web SDK v4 client-side JavaScript — Authentication (Hosted vs Embedded, generateAuthToken, cross-domain Slate→AppSail pattern), Data Store, ZCQL, File Store, Stratus, Search, Push Notifications, iFrame CSS customization, common auth errors |
+| `references/sdk-mobile.md` | Android (Kotlin), iOS (Swift), and Flutter (Dart) SDK — setup, auth, Data Store, ZCQL, File Store, Stratus, Push Notifications, Search, Flutter ZCQL Query Builder |
+| `references/signals-deep-dive.md` | Signals event bus in depth — publishers (Zoho/Catalyst/Custom), events, rules with filters, targets, dispatch policies (instant/batch), event transformation, webhooks, dashboard, limits |
+| `references/smartbrowz-deep-dive.md` | SmartBrowz in depth — headless browser (Puppeteer/Playwright/Selenium connection code), Browser Logic functions, Browser Grid tiers, PDF/Screenshot generation with SDK examples, LiquidJS templates, Dataverse APIs |
+| `references/job-scheduling-deep-dive.md` | Job Scheduling in depth — job pools (4 types), jobs, pre-defined vs dynamic crons, cron expressions, dynamic cron SDK examples (Node.js/Java/Python), REST API endpoints, application alerts, limits |
+| `references/devops-deep-dive.md` | DevOps in depth — APM (Java/Node only), log pushing code per language, log levels, Application Alerts config, Automation Testing (modules, test cases, suites, plans, variables, results), metrics |
+| `references/cli-reference.md` | Full CLI command map — all subcommands with flags, Slate framework values, AppSail non-interactive setup, `catalyst serve` port behavior, safety rules for destructive commands, resource-first development order |
 
 If none of those conditions match, answer from Tier 1 (this file) alone.
 

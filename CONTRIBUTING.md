@@ -47,7 +47,17 @@ skills/
     ├── meta-ids.md                       ← Project ID, ZAID, Table ID — where to find them
     ├── pricing.md                        ← Unit prices, free tiers, cost estimation
     ├── project-and-cli.md                ← CLI commands, project structure
-    └── zoho-mcp-tools.md                 ← LLM-driven resource management via Zoho MCP
+    ├── zoho-mcp-tools.md                 ← LLM-driven resource management via Zoho MCP
+    ├── sdk-nodejs.md                     ← Complete Node.js SDK code examples
+    ├── sdk-java.md                       ← Complete Java SDK code examples
+    ├── sdk-python.md                     ← Complete Python SDK code examples
+    ├── sdk-web.md                        ← Web SDK v4 client-side (auth, Data Store, Stratus)
+    ├── sdk-mobile.md                     ← Android, iOS, Flutter SDK reference
+    ├── signals-deep-dive.md              ← Signals event bus (publishers, rules, targets)
+    ├── smartbrowz-deep-dive.md           ← SmartBrowz (headless, grid, templates, dataverse)
+    ├── job-scheduling-deep-dive.md       ← Job pools, crons, SDK examples, REST APIs
+    ├── devops-deep-dive.md               ← APM, logs, automation testing, alerts
+    └── cli-reference.md                  ← Full CLI command map, Slate frameworks, safety
 ```
 
 ### Guidelines
