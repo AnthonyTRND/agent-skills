@@ -171,7 +171,9 @@ public class MyAdvancedFunction implements ZCFunction {
 
 **Node.js — Basic I/O Function:**
 ```javascript
-module.exports = async (catalystApp, context, basicIO) => {
+const catalyst = require('zcatalyst-sdk-node');
+module.exports = async (context, basicIO) => {
+  const catalystApp = catalyst.initialize(context);
   console.log('Processing request');           // INFO
   console.warn('Potential issue detected');     // WARNING
   console.error('Critical error occurred');     // ERROR

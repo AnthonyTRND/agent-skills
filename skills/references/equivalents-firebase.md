@@ -18,7 +18,7 @@ Key similarities:
 - Both support custom SSO and third-party identity providers.
 
 Key differences:
-- Catalyst's Security Rules (no_auth/user_auth/admin_auth) live on each function — simpler than
+- Catalyst's Security Rules (`optional`/`required`) live on each function — simpler than
   Firebase's per-collection Firestore security rules.
 - Catalyst supports Zoho Accounts as a native identity provider.
 - No Firebase App Check equivalent; Catalyst uses function-level access control instead.
@@ -76,7 +76,7 @@ Key differences:
 - Firebase Functions support TypeScript/JS only; Catalyst supports Node.js, Java, and Python.
 - Catalyst has 7 specialized function types with distinct handler signatures; Firebase has one model
   with various trigger types (HTTP, Firestore, Auth, Pub/Sub, etc.).
-- Catalyst auto-injects SDK (`catalystApp`) into the handler; Firebase uses `admin.initializeApp()`.
+- Catalyst SDK (`zcatalyst-sdk-node`) is initialized via `catalyst.initialize(context)`; Firebase uses `admin.initializeApp()`.
 - No direct equivalent to Firebase's `onDocumentCreated`/`onDocumentUpdated` triggers — use
   Signals (event bus) or Job Scheduling to replicate that pattern.
 

@@ -543,7 +543,7 @@ Auth types supported: Catalyst built-in auth, Zoho accounts, custom SSO.
 | Pattern | How to initialize | Use case |
 |---------|------------------|----------|
 | User-scoped (in Functions) | `catalyst.initialize(req)` | Operations on behalf of the logged-in user |
-| Admin-scoped (in Functions) | `catalyst.initialize(req, { type: catalyst.credential.admin })` | System-level operations, background tasks |
+| Admin-scoped (in Functions) | `catalyst.initialize(req, { scope: 'admin' })` | System-level operations, background tasks |
 | Admin-scoped (in AppSail) | Same as above | Server-to-server calls, scheduled tasks |
 
 **For long-running AppSail services:** Use admin credentials for server-to-server calls.
@@ -551,7 +551,7 @@ Admin tokens are generated per-request and don't expire mid-operation.
 
 > **DataStore permissions and App Users:** By default, the App User role has **Read-only** access to DataStore tables. Insert, Update, and Delete operations will return `"No privileges to perform this action"` even when the user is authenticated. Fix this in one of two ways:
 > 1. **Console (recommended for most apps):** Data Store → select table → Permissions → enable Read, Insert, Update, Delete for the "App User" role. Repeat for each table.
-> 2. **Admin-scoped SDK in backend:** Use `catalyst.initialize(req, { type: catalyst.credential.admin })` for DataStore operations. Still use user-scoped SDK (`catalyst.initialize(req)`) to call `getCurrentUser()` for authentication verification.
+> 2. **Admin-scoped SDK in backend:** Use `catalyst.initialize(req, { scope: 'admin' })` for DataStore operations. Still use user-scoped SDK (`catalyst.initialize(req)`) to call `getCurrentUser()` for authentication verification.
 >
 > ```javascript
 > // Verify auth with user-scoped SDK
@@ -559,7 +559,7 @@ Admin tokens are generated per-request and don't expire mid-operation.
 > const currentUser = await catalystApp.userManagement().getCurrentUser();
 >
 > // Perform DataStore ops with admin-scoped SDK
-> const adminApp = catalyst.initialize(req, { type: catalyst.credential.admin });
+> const adminApp = catalyst.initialize(req, { scope: 'admin' });
 > const dataStore = adminApp.datastore();
 > const zcql = adminApp.zcql();
 > ```
@@ -597,9 +597,9 @@ API Gateway can be configured via the Catalyst Console or a config file.
 **Example route mapping:**
 | Path pattern | Target | Auth | Rate limit |
 |-------------|--------|------|------------|
-| `/api/users/*` | Advanced I/O: `user_api` | user_auth | 100 req/min |
-| `/api/public/*` | Advanced I/O: `public_api` | no_auth | 50 req/min |
-| `/api/admin/*` | Advanced I/O: `admin_api` | admin_auth | 20 req/min |
+| `/api/users/*` | Advanced I/O: `user_api` | required | 100 req/min |
+| `/api/public/*` | Advanced I/O: `public_api` | optional | 50 req/min |
+| `/api/admin/*` | Advanced I/O: `admin_api` | required | 20 req/min |
 
 **CORS configuration (per-route):**
 - Allowed Origins: `*` (or specific domains)
@@ -608,7 +608,7 @@ API Gateway can be configured via the Catalyst Console or a config file.
 - Max Age: `86400` (seconds)
 
 API Gateway is the recommended way to expose functions publicly with rate limiting and
-auth enforcement, rather than setting individual function security rules to `no_auth`.
+auth enforcement, rather than setting individual function security rules to `optional`.
 
 ---
 

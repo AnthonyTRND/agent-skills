@@ -140,7 +140,7 @@ Error: `"No privileges to perform this action"`
 - Insert, Update, and Delete must be explicitly enabled per table in the console:
   Data Store → [table] → Permissions → App User role.
 - Alternative: use admin-scoped SDK for DataStore operations:
-  `catalyst.initialize(req, { type: catalyst.credential.admin })`
+  `catalyst.initialize(req, { scope: 'admin' })`
 
 ### CREATEDTIME timezone issues
 - Catalyst stores `CREATEDTIME` in the project's configured timezone (e.g. IST) WITHOUT an
@@ -199,7 +199,7 @@ Causes (check in this order):
 
 ## Auth Errors
 
-### `getCurrentUser()` throws 401 even when user is logged in
+### Server-side `userManagement().getCurrentUser()` throws 401 even when user is logged in
 - Web client fetch calls to Catalyst functions must include `credentials: 'include'`.
   Without it, auth cookies are not forwarded.
 - Fix: always add `credentials: 'include'` to fetch options:
@@ -209,6 +209,18 @@ Causes (check in this order):
     // ...
   });
   ```
+
+### `catalyst.auth.getCurrentUser is not a function` in the Web SDK
+- This method does not exist in the Web SDK.
+- Use `catalyst.auth.isUserAuthenticated()` instead — it resolves with the full user object
+  (`result.content.email_id`, `result.content.first_name`, etc.) on success, and rejects
+  with 401 on failure (platform auto-redirects to login).
+
+### `signOut()` crashes with `Cannot read properties of undefined`
+- `catalyst.auth.signOut()` requires a redirect URL argument.
+- Calling it without an argument crashes because the SDK calls `.startsWith("/")` on `undefined`.
+- Fix: `catalyst.auth.signOut(window.location.origin);` (Slate apps) or `catalyst.auth.signOut(window.location.origin + '/app/index.html');` (legacy Web Client)
+- Note: `constructSignOutUrl()` does not exist — do not use a two-step pattern.
 
 ### ZAID mismatch between environments
 - ZAID (Zoho Application ID) differs between Development and Production environments.

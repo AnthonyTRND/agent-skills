@@ -68,15 +68,28 @@ If this returns their org data, the connection is working.
 
 ## Execution flow: Always follow this sequence
 
-For any Catalyst resource operation via MCP tools, follow this exact order:
+> ⚠️ **Read `.catalystrc` first.** Before making ANY MCP tool calls, read `.catalystrc` from the project root. It contains the authoritative `projectId` and org env ID for the linked project. Do NOT rely solely on `List_All_Organizations` or `List_All_Projects` — users may have multiple orgs, and picking the wrong one returns `PERMISSION_NEEDED` with no further explanation.
 
 ```
-Step 1: List_All_Organizations          → Get the Catalyst-org ID
-Step 2: List_All_Projects               → Find project by name, get project ID
+Step 0: Read .catalystrc                → Get projectId and orgEnvId (authoritative source)
+Step 1: List_All_Organizations          → Confirm org ID (cross-check with .catalystrc orgEnvId)
+Step 2: List_All_Projects               → Find project, cross-check with .catalystrc projectId
 Step 3: Verify with a read operation    → e.g., List_All_Tables to confirm access
-         └─ If PERMISSION_NEEDED → ask user for correct project ID (see gotcha below)
+         └─ If PERMISSION_NEEDED → use IDs from .catalystrc or ask user for console URL
 Step 4: Proceed with create/read/update operations
 ```
+
+**`.catalystrc` example:**
+```json
+{
+  "project_id": "31594000000112008",
+  "project_domain": "docvault-60019947973.development",
+  "env_id": "60019947973",
+  "timezone": "Asia/Kolkata"
+}
+```
+
+The org env ID for the `Catalyst-org` header can be extracted from the project domain or obtained via `List_All_Organizations` — but always cross-check against the `.catalystrc` file.
 
 **Never skip Step 3.** It's a cheap read call that catches ID mismatches before you waste calls.
 

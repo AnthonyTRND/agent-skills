@@ -1,5 +1,7 @@
 # Catalyst Deployment SOPs
 
+> **⚠️ PRE-FLIGHT CHECK:** Before any deployment steps, confirm `.catalystrc` and `catalyst.json` exist. If not, tell the user to run `catalyst init` first.
+
 ## When to use this file
 Load this file when the user is deploying a Catalyst project, asking about deployment steps,
 running into deployment failures, promoting from Development to Production, setting up

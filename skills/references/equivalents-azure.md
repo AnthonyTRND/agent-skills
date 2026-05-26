@@ -15,8 +15,8 @@ understand Catalyst concepts, or to translate requests phrased as "I need someth
 Key differences:
 - Catalyst bundles 7 specialized function types with distinct handler signatures; Azure Functions use
   a single model with various trigger bindings configured externally.
-- Catalyst auto-injects the SDK (`catalystApp`) — no manual client initialization needed.
-- Security Rules (no_auth/user_auth/admin_auth) are built in — no separate Azure AD / API Management
+- Catalyst provides an SDK (`zcatalyst-sdk-node`) initialized via `catalyst.initialize(context)` — simpler than Azure SDK client setup.
+- Security Rules (`optional`/`required`) are built in — no separate Azure AD / API Management
   auth layer needed.
 
 **When a user says → they mean:**
@@ -239,7 +239,7 @@ Includes: Logs, APM (execution time, error rates, cold starts), and Application 
 ### Auth & User Management → Azure AD B2C
 
 Key differences:
-- Security Rules (no_auth/user_auth/admin_auth) on functions — simpler than AD B2C + APIM policies.
+- Security Rules (`optional`/`required`) on functions — simpler than AD B2C + APIM policies.
 - Supports Zoho Accounts as an identity provider.
 - Web SDK auth flow (`catalyst.auth.login()`) — like MSAL.js for B2C.
 

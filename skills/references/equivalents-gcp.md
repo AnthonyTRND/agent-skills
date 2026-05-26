@@ -15,8 +15,8 @@ understand Catalyst concepts, or to translate requests phrased as "I need someth
 Key differences:
 - Catalyst bundles 7 specialized function types with distinct handler signatures; GCP uses a single
   function model with event sources configured externally.
-- Catalyst auto-injects the SDK (`catalystApp`) — no manual client library init needed in functions.
-- Security Rules (no_auth/user_auth/admin_auth) are built in — no separate Cloud Endpoints/API Gateway
+- Catalyst provides an SDK (`zcatalyst-sdk-node`) initialized via `catalyst.initialize(context)` — simpler than GCP client library setup.
+- Security Rules (`optional`/`required`) are built in — no separate Cloud Endpoints/API Gateway
   auth layer needed.
 - Cold starts exist on both platforms.
 
@@ -235,7 +235,7 @@ Includes: Logs, APM (execution time, error rates, cold starts), and Application 
 ### Auth & User Management → Firebase Authentication (GCP-adjacent)
 
 Key differences:
-- Security Rules (no_auth/user_auth/admin_auth) on functions — simpler than Firebase Auth + Firestore rules.
+- Security Rules (`optional`/`required`) on functions — simpler than Firebase Auth + Firestore rules.
 - Supports Zoho Accounts as an identity provider.
 
 **When a user says → they mean:**

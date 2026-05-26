@@ -15,8 +15,8 @@ understand Catalyst concepts, or to translate requests phrased as "I need someth
 Key differences from Lambda:
 - Catalyst bundles 7 specialized function types with distinct handler signatures; Lambda uses a single
   model with event sources configured externally.
-- Catalyst auto-injects the SDK (`catalystApp`) into the handler — no `require('aws-sdk')` needed.
-- Security Rules (no_auth/user_auth/admin_auth) are built into function config — no separate
+- Catalyst provides an SDK (`zcatalyst-sdk-node`) initialized via `catalyst.initialize(context)` — simpler than `require('aws-sdk')` with manual credential setup.
+- Security Rules (`optional`/`required`) are built into function config — no separate
   IAM + API Gateway auth layer required as in AWS.
 - Cold starts exist on both; Catalyst defaults to 128MB memory (max 1024MB), comparable to Lambda's range.
 
@@ -254,7 +254,7 @@ Includes: Logs, APM (execution time, error rates, cold starts), and Application 
 ### Auth & User Management → Amazon Cognito
 
 Key differences:
-- Security Rules (no_auth/user_auth/admin_auth) are simpler than Cognito + API Gateway authorizers.
+- Security Rules (`optional`/`required`) are simpler than Cognito + API Gateway authorizers.
 - Web SDK auth flow (`catalyst.auth.login()`) — like the Cognito Hosted UI or Amplify Auth.
 - Supports Zoho Accounts as an identity provider.
 

@@ -43,7 +43,7 @@ Key similarities:
 - Both have client-side SDK auth flows.
 
 Key differences:
-- Catalyst's Security Rules on functions (no_auth/user_auth/admin_auth) replace Supabase Auth's
+- Catalyst's Security Rules on functions (`optional`/`required`) replace Supabase Auth's
   Row Level Security for API access control — simpler but less granular than RLS.
 - Catalyst supports Zoho Accounts as a native identity provider.
 - No Supabase Auth's "magic link" or "phone OTP" equivalent in Catalyst by default.
@@ -74,7 +74,7 @@ Key differences:
 Key differences:
 - Supabase Edge Functions run on Deno with TypeScript; Catalyst supports Node.js, Java, and Python.
 - Catalyst has 7 specialized function types; Supabase has one function type.
-- Catalyst SDK (`catalystApp`) is auto-injected; Supabase uses Deno imports.
+- Catalyst SDK (`zcatalyst-sdk-node`) is initialized via `catalyst.initialize(context)`; Supabase uses Deno imports.
 
 **When a user says → they mean:**
 - "I need Supabase Edge Functions" → Advanced I/O Function (HTTP-based)

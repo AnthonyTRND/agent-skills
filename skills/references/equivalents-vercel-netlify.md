@@ -34,8 +34,8 @@ Key differences from Vercel/Netlify:
 
 Key differences from Vercel Functions:
 - Catalyst has 7 specialized function types; Vercel uses a single function model.
-- Catalyst SDK (`catalystApp`) is auto-injected; Vercel uses standard Node.js `import`.
-- Security Rules (no_auth/user_auth/admin_auth) are built in — no need for separate auth middleware.
+- Catalyst SDK (`zcatalyst-sdk-node`) is initialized via `catalyst.initialize(context)`; Vercel uses standard Node.js `import`.
+- Security Rules (`optional`/`required`) are built in — no need for separate auth middleware.
 - Catalyst supports Node.js, Java, and Python; Vercel Functions support JS/TS and Go/Python/Ruby.
 
 **When a user says → they mean:**

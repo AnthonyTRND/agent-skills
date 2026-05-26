@@ -346,8 +346,7 @@ Web Client Hosting with modern Git-based workflows and native framework support.
 
 ### CLI workflow
 ```bash
-catalyst init slate                  # Initialize Slate service in project (interactive)
-catalyst slate:create                # Add another Slate app to existing project (interactive)
+catalyst slate:create                # Add an additional Slate app (interactive — asks framework + name + build config)
 catalyst slate:link                  # Link existing local dir to Slate service (interactive)
 catalyst slate:unlink                # Unlink a Slate app
 catalyst serve --only slate          # Serve Slate app locally

@@ -35,8 +35,10 @@ automation framework.
 
 ```javascript
 const puppeteer = require('puppeteer-core');
+const catalyst = require('zcatalyst-sdk-node');
 
-module.exports = async (catalystApp, context, basicIO) => {
+module.exports = async (context, basicIO) => {
+  const catalystApp = catalyst.initialize(context);
   const smartBrowz = catalystApp.smartBrowz();
   const browserDetails = await smartBrowz.open();
 
@@ -58,8 +60,10 @@ module.exports = async (catalystApp, context, basicIO) => {
 
 ```javascript
 const { chromium } = require('playwright');
+const catalyst = require('zcatalyst-sdk-node');
 
-module.exports = async (catalystApp, context, basicIO) => {
+module.exports = async (context, basicIO) => {
+  const catalystApp = catalyst.initialize(context);
   const smartBrowz = catalystApp.smartBrowz();
   const browserDetails = await smartBrowz.open();
 
@@ -133,8 +137,10 @@ public class BrowserFunction implements ZCFunction {
 ```javascript
 const { Builder } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+const catalyst = require('zcatalyst-sdk-node');
 
-module.exports = async (catalystApp, context, basicIO) => {
+module.exports = async (context, basicIO) => {
+  const catalystApp = catalyst.initialize(context);
   const smartBrowz = catalystApp.smartBrowz();
   const browserDetails = await smartBrowz.open();
 
