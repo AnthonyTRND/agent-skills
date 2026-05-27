@@ -11,7 +11,12 @@
 
 - Leverage Catalyst services for serverless compute, relational data storage, object storage, AI/ML, and workflow orchestration.
 - When Zoho MCP tools (`CatalystbyZoho_*`) are available in your tool list, use them for infrastructure operations (create tables, query data, manage buckets/cache) instead of asking the user to do it manually in the console.
-- Before any MCP tool call: run `List_All_Organizations` to get the org ID, then `List_All_Projects` to get the project ID.
+- **Mandatory MCP pre-flight — Org → Project → Verify → Operate:**
+  1. `List_All_Organizations` → get org `id` (if multiple orgs, ask the user which one)
+  2. `List_All_Projects` (with `Catalyst-org` header) → get project `id` (if multiple projects, ask the user)
+  3. `List_All_Tables` → verify access works before any write operations
+  4. Only then proceed with create/update operations
+- If `.catalystrc` exists locally, read it first for the authoritative `project_id` and `env_id`, then cross-check with the MCP calls above.
 - Always default to `"Development"` environment unless the user explicitly requests production.
 - If `List_All_Tables` returns `PERMISSION_NEEDED`, ask the user for the correct project ID from their Catalyst console URL (format: `.../project/<project_id>/...`).
 - If the user asks to create tables, query data, manage cache, or set up infrastructure — use MCP tools directly instead of asking them to go to the console.

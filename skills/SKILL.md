@@ -291,6 +291,22 @@ Without these, `catalyst deploy` either crashes or deploys to nowhere. Every fil
    console instructions for manual creation. Read `references/zoho-mcp-tools.md` before making
    any MCP tool calls.
 
+   > **⚠️ MCP mandatory pre-flight: Org → Project → Verify → Operate.**
+   > Before making ANY MCP tool call that targets a project (creating tables, querying data,
+   > managing buckets, etc.), you MUST first identify the correct **org ID** and **project ID**.
+   > Without these, every call will fail with `PERMISSION_NEEDED` or `INVALID_ORG`.
+   >
+   > **If `.catalystrc` exists** in the working directory — read it first. It contains the
+   > authoritative `project_id` and `env_id`. Cross-check with `List_All_Organizations`.
+   >
+   > **If `.catalystrc` does NOT exist** (chat-only context, no local project) — you MUST call:
+   > 1. `List_All_Organizations` → get the org `id` (used as `Catalyst-org` header)
+   > 2. `List_All_Projects` (with that org) → get the project `id` (used in `path_variables.projectId`)
+   > 3. A verification read (e.g., `List_All_Tables`) → confirm access works before any writes
+   >
+   > **Never skip this sequence.** Never guess org or project IDs. See `references/zoho-mcp-tools.md`
+   > for the full flow, ID mismatch gotchas, and troubleshooting.
+
 ## ⚠️ Deprecation notices (as of May 2026)
 
 The following Catalyst components are **deprecated** and will be removed in a future update

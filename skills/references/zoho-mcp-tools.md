@@ -66,16 +66,22 @@ Call List_All_Organizations (no parameters needed)
 ```
 If this returns their org data, the connection is working.
 
-## Execution flow: Always follow this sequence
+## 🛑 Execution flow: MANDATORY — Always follow this sequence before ANY project-scoped MCP call
 
-> ⚠️ **Read `.catalystrc` first.** Before making ANY MCP tool calls, read `.catalystrc` from the project root. It contains the authoritative `projectId` and org env ID for the linked project. Do NOT rely solely on `List_All_Organizations` or `List_All_Projects` — users may have multiple orgs, and picking the wrong one returns `PERMISSION_NEEDED` with no further explanation.
+> **Every MCP call that targets a Catalyst project (create table, query rows, manage buckets, etc.)
+> requires two IDs: the org ID (`Catalyst-org` header) and the project ID (`path_variables.projectId`).
+> Without both, calls fail with `PERMISSION_NEEDED` or `INVALID_ORG`. You MUST resolve these IDs
+> BEFORE attempting any operation.**
+
+### Path A: Local project exists (`.catalystrc` found in working directory)
+
+If you have filesystem access and `.catalystrc` exists in the project root, use it as the authoritative source:
 
 ```
-Step 0: Read .catalystrc                → Get projectId and orgEnvId (authoritative source)
-Step 1: List_All_Organizations          → Confirm org ID (cross-check with .catalystrc orgEnvId)
-Step 2: List_All_Projects               → Find project, cross-check with .catalystrc projectId
+Step 1: Read .catalystrc                → Get projectId and env_id
+Step 2: List_All_Organizations          → Get org id, cross-check env_id with .catalystrc
 Step 3: Verify with a read operation    → e.g., List_All_Tables to confirm access
-         └─ If PERMISSION_NEEDED → use IDs from .catalystrc or ask user for console URL
+         └─ If PERMISSION_NEEDED → ask user for project ID from Catalyst console URL
 Step 4: Proceed with create/read/update operations
 ```
 
@@ -89,9 +95,43 @@ Step 4: Proceed with create/read/update operations
 }
 ```
 
-The org env ID for the `Catalyst-org` header can be extracted from the project domain or obtained via `List_All_Organizations` — but always cross-check against the `.catalystrc` file.
+The `env_id` in `.catalystrc` corresponds to the org environment — cross-check it against the org returned by `List_All_Organizations`.
 
-**Never skip Step 3.** It's a cheap read call that catches ID mismatches before you waste calls.
+### Path B: No local project (chat-only context — GPT, Claude chat, etc.)
+
+When there is no `.catalystrc` (no local project, chat-only usage), you MUST discover the org and project interactively:
+
+```
+Step 1: List_All_Organizations          → Returns all orgs the user has access to
+         └─ If multiple orgs → ASK the user which org to use (do NOT guess)
+         └─ Save the org `id` — this becomes the `Catalyst-org` header for all calls
+
+Step 2: List_All_Projects               → Pass the org id, returns all projects in that org
+         (headers: { "Catalyst-org": "<org_id>" })
+         └─ If multiple projects → ASK the user which project to use (do NOT guess)
+         └─ Save the project `id` — this becomes `path_variables.projectId` for all calls
+
+Step 3: Verify with a read operation    → e.g., List_All_Tables
+         (headers: { "Catalyst-org": "<org_id>", "Environment": "Development" },
+          path_variables: { "projectId": "<project_id>" })
+         └─ If PERMISSION_NEEDED → the project ID is likely wrong (see "Project ID mismatch" below)
+         └─ If success → you now have confirmed working org + project IDs
+
+Step 4: Proceed with create/read/update operations using these confirmed IDs
+```
+
+> **Key rule for multi-org / multi-project users:** NEVER assume which org or project the user
+> wants to work with. If `List_All_Organizations` returns more than one org, or `List_All_Projects`
+> returns more than one project, **always ask the user to pick**. Guessing wrong means all
+> subsequent operations silently target the wrong project.
+
+### Common mistake: Skipping straight to operations
+
+❌ **Wrong:** `Create_Table` → fails with `PERMISSION_NEEDED` (no org/project context)
+❌ **Wrong:** `List_All_Projects` → `Create_Table` (skipped org identification, wrong `Catalyst-org`)
+✅ **Correct:** `List_All_Organizations` → `List_All_Projects` → `List_All_Tables` (verify) → `Create_Table`
+
+**Never skip the verify step (Step 3).** It's a cheap read call that catches ID mismatches before you waste write calls or create resources in the wrong project.
 
 ## ⚠️ Critical gotcha: Project ID mismatch
 
