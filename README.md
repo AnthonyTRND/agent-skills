@@ -10,7 +10,7 @@ These skills give AI coding agents (Claude, etc.) deep knowledge of Catalyst's p
 |-------|-------------|
 | `catalyst-by-zoho` | Complete Catalyst development assistant — covers all services, SDKs, CLI, architecture patterns, pricing, migration guides, and Zoho MCP tool-based resource management |
 
-> **Note:** The skill includes `llms-full.txt` (~11 MB), a complete Catalyst documentation dump used as a fallback for exhaustive lookups. The tiered context system ensures this file is only loaded when needed, keeping token usage efficient.
+> **Note:** For edge-case lookups not covered by the Tier 1 or Tier 2 reference files, the skill instructs agents to search the official Catalyst docs site (`docs.catalyst.zoho.com`) and fetch individual pages — rather than bundling the full documentation dump locally. This keeps the repo lean while ensuring accurate, up-to-date answers.
 
 ### The skill covers
 

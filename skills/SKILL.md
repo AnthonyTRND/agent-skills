@@ -97,23 +97,29 @@ Detailed, focused docs. **Load a file ONLY when the user's query clearly require
 
 If none of those conditions match, answer from Tier 1 (this file) alone.
 
-### Tier 3 — `llms-full.txt` (load only as a last resort)
-A full dump of all Catalyst documentation (~11 MB). **NEVER load this proactively.**
+### Tier 3 — Official Catalyst docs site (search only as a last resort)
+The full Catalyst documentation lives at `https://docs.catalyst.zoho.com/en/`. **NEVER search this proactively.**
 
-Only load `llms-full.txt` when ALL of the following conditions are true:
+> **Why not `llms-full.txt`?** The hosted `llms-full.txt` is ~11 MB. Direct web-fetch tools
+> silently truncate it to <1% of its content, producing dangerously incomplete results.
+> Individual doc pages, however, fetch fully and reliably. Always prefer the two-step
+> approach below.
+
+Only search the docs site when ALL of the following conditions are true:
 1. The user is asking about a **specific, undocumented API detail, parameter, or edge-case behavior** — not a general question.
 2. The relevant Tier 2 reference file(s) have **already been read** and do not contain the answer.
 3. Tier 1 (this file) also does not cover it.
 
-**When you do need to consult `llms-full.txt`, never load the whole file. Use targeted reads:**
-1. `Grep` the file for the specific keyword, API name, or parameter — this returns matching lines with context.
-2. `Read` only the relevant line range using `offset` and `limit`.
-3. Repeat with refined keywords if the first grep misses.
+**Two-step lookup procedure:**
+1. **Web search** with a site-scoped query to find the right page:
+   - Use: `site:docs.catalyst.zoho.com <specific term>` (e.g., `site:docs.catalyst.zoho.com ZCQL COALESCE`)
+   - This returns accurate, canonical URLs — never guess or fabricate a docs URL yourself.
+2. **Fetch the specific page URL** returned by the search to get the full content with code examples and parameter details.
 
-Only if grep + targeted reads are still insufficient should you consider reading larger sections — and before doing so, warn the user:
-> "This requires loading a large portion of the full documentation (~11MB). This will consume significant tokens."
-
-**Do NOT load `llms-full.txt` for:** routine code generation, architecture questions, CLI usage, pricing, SDK patterns, troubleshooting common errors, deployment procedures, observability, or anything the Tier 1 or Tier 2 files already cover.
+**Do NOT:**
+- Fetch `https://docs.catalyst.zoho.com/en/llms-full.txt` directly — it will silently truncate to <1% of the content.
+- Fabricate docs URLs from memory (e.g., `zoho.catalyst.com/docs/...`) — these do not exist. All Catalyst documentation lives under `https://docs.catalyst.zoho.com/en/`.
+- Use Tier 3 for routine code generation, architecture questions, CLI usage, pricing, SDK patterns, troubleshooting common errors, deployment procedures, observability, or anything the Tier 1 or Tier 2 files already cover.
 
 Always read the relevant reference file(s) before writing code. If the request spans multiple areas (e.g.
 "write a Catalyst function that queries Data Store and stores results in Stratus"), read all applicable

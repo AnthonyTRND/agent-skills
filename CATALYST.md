@@ -36,7 +36,7 @@ Before starting any Catalyst task, load the relevant reference file from `skills
 | AppSail, Circuits, Slate, Signals, Pipelines deep-dive | `references/services.md` |
 | Migrating from AWS / GCP / Azure / Firebase / Supabase / Heroku / Vercel | `references/equivalents-*.md` |
 
-Do NOT load `llms-full.txt` unless Tier 2 reference files don't contain the answer.
+If Tier 2 reference files don't contain the answer, use a site-scoped web search (`site:docs.catalyst.zoho.com <term>`) and fetch the specific page URL returned. Do NOT fabricate docs URLs — all Catalyst documentation lives under `https://docs.catalyst.zoho.com/en/`.
 
 ---
 

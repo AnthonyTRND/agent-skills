@@ -19,3 +19,6 @@ node_modules/
 # Temp
 *.tmp
 *.bak
+
+# Large doc dumps (use web search against docs.catalyst.zoho.com instead)
+llms-full.txt
