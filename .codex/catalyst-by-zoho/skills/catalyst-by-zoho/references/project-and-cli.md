@@ -298,8 +298,19 @@ Prerequisites: Node.js v20 (LTS) and NPM.
 1. **Select a default Catalyst portal** — arrow keys to pick from user's Zoho portals/orgs
 2. **Select a default Catalyst project** — arrow keys to pick an existing Catalyst project, or "Create a new project" (redirects to console)
 3. **Which features to setup?** — checkboxes (Space to toggle, Enter to confirm): **Functions**, **Client**, **AppSail**, **Slate**. Select **Functions + Slate** for most apps. Do NOT select "Client" — it is legacy and being deprecated.
-4. If Functions selected: prompts for function name, type (arrow keys: basicio/advancedio/event/cron), and stack (arrow keys: node20/java17/python39)
-5. If Slate selected: prompts for framework (arrow keys: react-vite, nextjs, angular, vue, svelte, astro, solidjs, vite, etc.), app name, and build config (install command, build command, build path — enter N for defaults or Y to customize)
+
+> ⚠️ **Slate prerequisite:** Before selecting Slate here, the user must first enable Slate in the Catalyst console: go to **console.catalyst.zoho.com → project → Slate** (left sidebar) → click **"Start Exploring"**. This is a one-time activation per project. Without it, Slate init will fail.
+4. If **Functions** selected — npm package setup for the first function:
+   - `package name:` — text input (e.g., `docvault_api`)
+   - `entry point:` — text input (default: `index.js`)
+   - `author:` — text input (default: logged-in Zoho email)
+   - `Do you wish to install all dependencies now?` — Yes/No (recommend Yes)
+5. If **Slate** selected — Slate Setup:
+   - `Select a framework to start with:` — arrow keys (React + Vite, Next.js, Angular, Vue, Svelte, Astro, SolidJS, etc.)
+   - `Please provide the name for your app:` — text input (e.g., `docvault-ui`)
+   - Auto-detected config shown: Install Command, Build Command, Build Path, Deployment Name
+   - `Do you want to modify these default configurations?` — Yes/No (recommend No for defaults)
+   - `Please provide your Development Command:` — text input (default: `npm run dev -- --port $ZC_SLATE_PORT`)
 
 After init completes, `.catalystrc` and `catalyst.json` are created automatically.
 

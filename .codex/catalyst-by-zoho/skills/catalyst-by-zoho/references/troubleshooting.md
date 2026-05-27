@@ -219,7 +219,7 @@ Causes (check in this order):
 ### `signOut()` crashes with `Cannot read properties of undefined`
 - `catalyst.auth.signOut()` requires a redirect URL argument.
 - Calling it without an argument crashes because the SDK calls `.startsWith("/")` on `undefined`.
-- Fix: `catalyst.auth.signOut(window.location.origin + '/app/index.html');`
+- Fix: `catalyst.auth.signOut(window.location.origin);` (Slate apps) or `catalyst.auth.signOut(window.location.origin + '/app/index.html');` (legacy Web Client)
 - Note: `constructSignOutUrl()` does not exist — do not use a two-step pattern.
 
 ### ZAID mismatch between environments

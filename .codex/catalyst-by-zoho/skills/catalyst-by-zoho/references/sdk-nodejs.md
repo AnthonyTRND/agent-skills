@@ -387,11 +387,13 @@ await table.deleteItems([
 
 ### Bucket Operations
 
+> ⚠️ **Stratus bucket names are globally unique** across ALL Catalyst projects and orgs. Generic names like `my-files` will likely already be taken. Use a project-specific suffix: `{app-name}-{project-id-prefix}` (e.g., `docvault-files-70699`). A `DUPLICATE_ENTRY` error on creation does NOT mean the bucket exists in your project — it may belong to another project entirely and will be inaccessible to you.
+
 ```js
 const stratus = catalystApp.stratus();
 
 // --- Get a bucket instance ---
-const bucket = stratus.bucket('my-bucket');
+const bucket = stratus.bucket('myapp-files-70699'); // Use project-specific name
 
 // --- List all buckets ---
 const buckets = await stratus.listBuckets();

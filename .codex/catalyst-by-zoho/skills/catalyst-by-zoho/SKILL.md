@@ -97,23 +97,29 @@ Detailed, focused docs. **Load a file ONLY when the user's query clearly require
 
 If none of those conditions match, answer from Tier 1 (this file) alone.
 
-### Tier 3 — `llms-full.txt` (load only as a last resort)
-A full dump of all Catalyst documentation (~11 MB). **NEVER load this proactively.**
+### Tier 3 — Official Catalyst docs site (search only as a last resort)
+The full Catalyst documentation lives at `https://docs.catalyst.zoho.com/en/`. **NEVER search this proactively.**
 
-Only load `llms-full.txt` when ALL of the following conditions are true:
+> **Why not `llms-full.txt`?** The hosted `llms-full.txt` is ~11 MB. Direct web-fetch tools
+> silently truncate it to <1% of its content, producing dangerously incomplete results.
+> Individual doc pages, however, fetch fully and reliably. Always prefer the two-step
+> approach below.
+
+Only search the docs site when ALL of the following conditions are true:
 1. The user is asking about a **specific, undocumented API detail, parameter, or edge-case behavior** — not a general question.
 2. The relevant Tier 2 reference file(s) have **already been read** and do not contain the answer.
 3. Tier 1 (this file) also does not cover it.
 
-**When you do need to consult `llms-full.txt`, never load the whole file. Use targeted reads:**
-1. `Grep` the file for the specific keyword, API name, or parameter — this returns matching lines with context.
-2. `Read` only the relevant line range using `offset` and `limit`.
-3. Repeat with refined keywords if the first grep misses.
+**Two-step lookup procedure:**
+1. **Web search** with a site-scoped query to find the right page:
+   - Use: `site:docs.catalyst.zoho.com <specific term>` (e.g., `site:docs.catalyst.zoho.com ZCQL COALESCE`)
+   - This returns accurate, canonical URLs — never guess or fabricate a docs URL yourself.
+2. **Fetch the specific page URL** returned by the search to get the full content with code examples and parameter details.
 
-Only if grep + targeted reads are still insufficient should you consider reading larger sections — and before doing so, warn the user:
-> "This requires loading a large portion of the full documentation (~11MB). This will consume significant tokens."
-
-**Do NOT load `llms-full.txt` for:** routine code generation, architecture questions, CLI usage, pricing, SDK patterns, troubleshooting common errors, deployment procedures, observability, or anything the Tier 1 or Tier 2 files already cover.
+**Do NOT:**
+- Fetch `https://docs.catalyst.zoho.com/en/llms-full.txt` directly — it will silently truncate to <1% of the content.
+- Fabricate docs URLs from memory (e.g., `zoho.catalyst.com/docs/...`) — these do not exist. All Catalyst documentation lives under `https://docs.catalyst.zoho.com/en/`.
+- Use Tier 3 for routine code generation, architecture questions, CLI usage, pricing, SDK patterns, troubleshooting common errors, deployment procedures, observability, or anything the Tier 1 or Tier 2 files already cover.
 
 Always read the relevant reference file(s) before writing code. If the request spans multiple areas (e.g.
 "write a Catalyst function that queries Data Store and stores results in Stratus"), read all applicable
@@ -178,15 +184,25 @@ catalyst login
 catalyst init
 ```
 
+**Important — if the app needs a frontend:** Before running `catalyst init`, you must first enable Slate in the Catalyst console. Go to **console.catalyst.zoho.com → your project → Slate** (in the left sidebar) → click **"Start Exploring"**. This is a one-time activation. Without this step, the Slate option during `catalyst init` will not work.
+
 During `catalyst init`, you'll be asked to:
 1. **Select a default Catalyst portal** — pick your Zoho portal/org
 2. **Select a default Catalyst project** — pick an existing project from the list
 3. **Which features to setup?** — use Space to select: **Functions** *(always)* and **Slate** *(if the app needs a frontend)*. Do NOT select "Client" — it is legacy and being deprecated.
 
-If you selected Slate, the CLI will then ask:
-- **Framework** — select one (e.g., react-vite, nextjs, angular, vue, svelte, astro)
-- **App name** — enter a name for the Slate app
-- **Build config** — confirm or customize install command, build command, and build path
+If you selected **Functions**, the CLI will prompt for the first function's npm package setup:
+- `package name:` — enter a name (e.g., `docvault_api`)
+- `entry point:` — press Enter to accept default (`index.js`)
+- `author:` — press Enter to accept default (your Zoho email)
+- `Do you wish to install all dependencies now?` — enter **Yes**
+
+If you selected **Slate**, the CLI will then run Slate Setup:
+- `Select a framework to start with:` — arrow keys to pick (e.g., **React + Vite**, Next.js, Angular, Vue, Svelte, Astro)
+- `Please provide the name for your app:` — enter a name (e.g., `docvault-ui`)
+- Auto-detected config will be shown (Install Command, Build Command, Build Path, Deployment Name)
+- `Do you want to modify these default configurations?` — enter **No** to accept defaults
+- `Please provide your Development Command:` — press Enter to accept default (`npm run dev -- --port $ZC_SLATE_PORT`)
 
 After that, register the backend functions:
 
@@ -194,7 +210,7 @@ After that, register the backend functions:
 catalyst functions:add
 ```
 
-The functions I'll need are:
+Run this once for each function. The functions I'll need are:
 - *(list the function names, types, and stacks here)*
 
 **Let me know once you've completed these steps and I'll build everything.**
@@ -274,6 +290,22 @@ Without these, `catalyst deploy` either crashes or deploys to nowhere. Every fil
    conversation. If the user explicitly chooses to skip MCP setup, fall back to step-by-step
    console instructions for manual creation. Read `references/zoho-mcp-tools.md` before making
    any MCP tool calls.
+
+   > **⚠️ MCP mandatory pre-flight: Org → Project → Verify → Operate.**
+   > Before making ANY MCP tool call that targets a project (creating tables, querying data,
+   > managing buckets, etc.), you MUST first identify the correct **org ID** and **project ID**.
+   > Without these, every call will fail with `PERMISSION_NEEDED` or `INVALID_ORG`.
+   >
+   > **If `.catalystrc` exists** in the working directory — read it first. It contains the
+   > authoritative `project_id` and `env_id`. Cross-check with `List_All_Organizations`.
+   >
+   > **If `.catalystrc` does NOT exist** (chat-only context, no local project) — you MUST call:
+   > 1. `List_All_Organizations` → get the org `id` (used as `Catalyst-org` header)
+   > 2. `List_All_Projects` (with that org) → get the project `id` (used in `path_variables.projectId`)
+   > 3. A verification read (e.g., `List_All_Tables`) → confirm access works before any writes
+   >
+   > **Never skip this sequence.** Never guess org or project IDs. See `references/zoho-mcp-tools.md`
+   > for the full flow, ID mismatch gotchas, and troubleshooting.
 
 ## ⚠️ Deprecation notices (as of May 2026)
 
@@ -462,6 +494,7 @@ catalyst deploy slate --production    # Deploy to Production environment
 - **NEVER scaffold a Catalyst project yourself** — `catalyst.json`, `.catalystrc`, `functions/`, and `client/` are ALL created by `catalyst init`. If you create them manually they will lack Project ID, Environment ID, and ZAID — deployment will fail with no useful error. Always ask the user to run `catalyst init` themselves. This is the #1 cause of failed Catalyst builds by LLMs.
 - **`catalyst init`, `catalyst login`, `catalyst functions:add` are INTERACTIVE** — they use arrow-key menus and multi-step prompts. NEVER run them in a script or terminal session. Always instruct the user to run them manually in their own terminal and wait for confirmation before proceeding.
 - **Select Slate during `catalyst init`** — Slate is a component option alongside Functions, Client, and AppSail. Select **Functions + Slate** (not Client). If you need to add more Slate apps later, use `catalyst slate:create`.
+- **Slate requires one-time console activation** — Before using Slate in the CLI, the user must go to the Catalyst console → their project → **Slate** (left sidebar) → click **"Start Exploring"**. Without this, Slate init via CLI will fail. This only needs to be done once per project.
 - **`catalyst functions:add` is required before first deploy** — a function directory + `catalyst-config.json` alone is not enough; the CLI must register it interactively first. The user must run it from the project root and answer name/type/stack prompts
 - **Deploy flag is `--only functions` (with space)** — NOT `--only-functions`. Hyphenated form throws "unknown option" in CLI v1.23.0+. Single function: `--only functions:<name>`
 - **`catalyst-config.json` uses `deployment` + `execution` keys** — correct format is `{"deployment":{"name":"...","type":"...","stack":"...","env_variables":{}},"execution":{"main":"index.js"}}`. Do NOT use a `function` key or `entry_point` — neither exists. Using them crashes `catalyst deploy` with a cryptic TypeError.
@@ -471,14 +504,17 @@ catalyst deploy slate --production    # Deploy to Production environment
 - **ZCQL max 300 rows per query** — use `LIMIT offset, count` pagination (e.g. `LIMIT 0, 300`, `LIMIT 300, 300`) for larger datasets
 - **ZAID differs between Dev and Prod** — #1 source of auth issues in production
 - **25-user limit in Development** — no limit in production
+- **Stratus bucket names are globally unique** — across ALL Catalyst projects and orgs. Generic names like `my-files` will be taken. Use `{app-name}-{project-id-prefix}` (e.g., `docvault-files-70699`). A `DUPLICATE_ENTRY` error does NOT mean it's in your project — it may belong to another project and be inaccessible.
+- **Slate + Advanced I/O functions are cross-domain** — Slate serves from `*.onslate.com`, functions from `*.catalystserverless.com`. Relative paths like `/server/func/execute` DO NOT work — you'll get HTML back instead of JSON. Use the full function URL + `generateAuthToken()` + CORS whitelist in Console → Authentication → Authorized Domains.
+- **Hosted Authentication must be enabled in console** — Before `/__catalyst/auth/login` works, enable it in Console → Authentication → Login → Hosted Authentication. The Web SDK does NOT auto-redirect on auth failure — you must redirect manually in the `.catch()` block.
 - **AppSail port**: use `process.env.X_ZOHO_CATALYST_LISTEN_PORT` with fallback
 - **Cache values are strings only** — serialize/deserialize JSON yourself
 - **Integration Functions NOT available** in EU, AU, IN, or CA data centers
 - **CLI always deploys to Development** — production deployment via web console only
 - **New users after Aug 27, 2025** cannot access File Store, Event Listeners, or Cron — these services are deprecated (originally scheduled for removal April 30, 2026 — still functional with deprecation warnings, removal date TBD)
-- **DataStore table permissions default to Read-only for App Users** — Insert, Update, and Delete must be explicitly enabled per table in the console (Data Store → table → Permissions → App User role). Without this, backend functions using user-scoped SDK (`catalyst.initialize(req)`) will get `"No privileges to perform this action"` even for authenticated users. Fix: enable CRUD in console, or use admin-scoped SDK for DataStore operations: `catalyst.initialize(req, { scope: 'admin' })`.
+- **DataStore App User permissions are OFF by default (REQUIRED setup step)** — Newly created tables give App Users **zero permissions** — no Select, Insert, Update, or Delete. This is not optional configuration; it's a required step after creating every table. Go to **Console → Data Store → {Table} → Scopes & Permissions → Table Permissions → App User → check Select, Insert, Update, Delete**. Without this, any user-authenticated function call will fail silently or return permissions errors. Alternative: use admin-scoped SDK `catalyst.initialize(req, { scope: 'admin' })` to bypass user permissions.
 - **Web client → function fetch must include `credentials: 'include'`** — without it, auth cookies are not forwarded and server-side `userManagement().getCurrentUser()` throws with 401, even when both web client and function are on the same Catalyst domain.
-- **Web SDK `catalyst.auth.getCurrentUser()` does NOT exist** — use `catalyst.auth.isUserAuthenticated()` instead. It resolves with the full user object (`result.content.email_id`, etc.) on success and rejects with 401 on failure (triggering auto-redirect to login).
+- **Web SDK `catalyst.auth.getCurrentUser()` does NOT exist** — use `catalyst.auth.isUserAuthenticated()` instead. It resolves with the full user object (`result.content.email_id`, etc.) on success and rejects with 401 on failure. The SDK does NOT auto-redirect — you must redirect manually to `/__catalyst/auth/login`.
 - **Web SDK `catalyst.auth.signOut()` requires a redirect URL argument** — call `catalyst.auth.signOut(redirectURL)`. Calling it without an argument crashes. `constructSignOutUrl()` does not exist.
 - **Advanced I/O `req` has no `body`, `files`, `query`, or `params`** — it is a raw `http.IncomingMessage`, not Express. For JSON: accumulate stream chunks. For file uploads: use `busboy`. For query params: use `new URL(req.url, ...).searchParams`.
 - **Only node20 is actively supported** — node14, 16, and 18 still work for legacy projects but receive no upstream security patches. — `executeZCQLQuery` returns `[{ tablename: { ROWID: ..., col: ... } }]`. Always unwrap: `result.map(r => r.TableName)`. The key matches the table name as defined in the console (case-sensitive).

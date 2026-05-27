@@ -129,8 +129,8 @@ Auth: Catalyst Auth & User Management
 
 **Key implementation notes:**
 - Always use `credentials: 'include'` in `fetch()` calls from Slate to the function
-- Enable CRUD permissions for App User role on each Data Store table
-- Use admin-scoped SDK for all DataStore operations in the function
+- **⚠️ REQUIRED: Enable App User permissions on every table** — Console → Data Store → {Table} → Scopes & Permissions → App User → check Select, Insert, Update, Delete. Without this, ALL user-authenticated operations fail silently. This is not optional.
+- Use admin-scoped SDK (`catalyst.initialize(req, { scope: 'admin' })`) for DataStore operations to bypass user permission checks
 - Use user-scoped SDK only to call `getCurrentUser()` for auth verification
 
 **Project structure:**

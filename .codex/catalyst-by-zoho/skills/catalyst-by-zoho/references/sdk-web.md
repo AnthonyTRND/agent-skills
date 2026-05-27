@@ -19,20 +19,31 @@ The `init.js` script auto-initializes the SDK with the current project context. 
 
 ### client-package.json
 
-Place this in the root of your client directory:
+This file tells Catalyst where to redirect after login. Its placement depends on your framework:
+
+| Framework | Place `client-package.json` in… | Why |
+|-----------|--------------------------------|-----|
+| **Vite / React / Vue** | `public/client-package.json` | Vite copies `public/` to `dist/` at build time |
+| **Next.js** | `public/client-package.json` | Next.js serves `public/` as static assets |
+| **Angular** | `src/assets/client-package.json` | Angular copies `assets/` to the build output |
+| **Legacy Web Client (`client/`)** | `client/client-package.json` | Served directly from the client root |
+
+For Slate apps, use `/` as the path (not `/app/index.html` — that's the legacy Web Client pattern):
 
 ```json
 {
   "name": "my-app",
   "version": "1.0.0",
   "description": "My Catalyst application",
-  "homepage": "/app/index.html",
-  "login_redirect": "/app/index.html"
+  "homepage": "/",
+  "login_redirect": "/"
 }
 ```
 
 - `homepage` — default landing page after login
 - `login_redirect` — where to redirect after successful authentication
+
+> ⚠️ **Do NOT place this in the project root alongside `vite.config.js`** — it won't be included in the build output. It must be in a directory that your build tool copies to the output folder (e.g., `public/` for Vite).
 
 ### Response Pattern
 
@@ -63,25 +74,26 @@ Catalyst supports two authentication types for client apps. **Ask the user which
 
 ### Auth Type 1: Hosted Login (Redirect-Based)
 
-The default approach. Catalyst automatically redirects unauthenticated users to a Zoho login page.
+The standard approach. Uses Catalyst's built-in login page at `/__catalyst/auth/login`.
 
-- No `signIn()` call needed — the redirect happens automatically when the SDK initializes
+> ⚠️ **Console prerequisite:** You must enable Hosted Authentication in the Catalyst console first: **Console → Authentication → Login → enable Hosted Authentication**. Without this, `/__catalyst/auth/login` returns a 404.
+
+- No `signIn()` call needed — use `isUserAuthenticated()` to check, then redirect manually on failure
 - After login, the user is redirected back to `login_redirect` from `client-package.json`
 - Best for standard web apps where you want Zoho to handle the full login UI
 
 ```js
-// Use isUserAuthenticated() to check login status and get the current user.
-// If authenticated, it resolves with the full user object.
-// If NOT authenticated, it rejects — and the platform auto-redirects to the Zoho login page.
+// Check auth status and redirect manually if not authenticated.
+// The SDK does NOT auto-redirect — you must handle the .catch() yourself.
 catalyst.auth.isUserAuthenticated().then(result => {
   // result.content contains the full user object
   console.log(result.content.email_id);
   console.log(result.content.first_name);
   showApp(result.content);
 }).catch(err => {
-  // User is not logged in — platform will auto-redirect to login.
-  // Optionally show a message before the redirect happens.
-  console.log('Not authenticated, redirecting...');
+  // User is not logged in — redirect to Catalyst's hosted login page.
+  // The SDK does NOT auto-redirect. You must do this explicitly.
+  window.location.href = '/__catalyst/auth/login';
 });
 ```
 
@@ -94,7 +106,7 @@ Renders login/signup forms inside your page via an iFrame.
 ```js
 // Sign In
 catalyst.auth.signIn("login-div", {
-  login_redirect: "/app/index.html"
+  login_redirect: "/" // Use "/" for Slate apps, "/app/index.html" for legacy Web Client
 });
 
 // Sign Up
@@ -134,8 +146,8 @@ try {
   console.log(result.content.created_time);// "Jul 05, 2023 10:30 AM"
 } catch (err) {
   // On failure: rejects with a 401 error when user is NOT authenticated.
-  // The platform will auto-redirect to the Zoho login page.
-  console.log('Not authenticated');
+  // The SDK does NOT auto-redirect. You must redirect manually:
+  window.location.href = '/__catalyst/auth/login';
 }
 ```
 
@@ -150,7 +162,9 @@ Sign the user out by calling `signOut()` with a redirect URL. This is a single c
 ```js
 // Pass the URL to redirect to after sign-out completes.
 // This does NOT return a promise — it navigates away immediately.
-const redirectURL = window.location.origin + '/app/index.html';
+// Use window.location.origin for Slate apps (served at root /)
+// Use window.location.origin + '/app/index.html' only for legacy Web Client Hosting
+const redirectURL = window.location.origin;
 catalyst.auth.signOut(redirectURL);
 ```
 
@@ -226,6 +240,51 @@ const result = await callAppSail("/api/items", "POST", { name: "New Item" });
 
 - **AppSail CORS whitelist:** Add your Slate domain (`*.catalystserverless.com`) in the AppSail CORS settings via the Catalyst console
 - **No `cors()` middleware:** Do NOT add Express `cors()` middleware in your AppSail code — Catalyst handles CORS at the platform level. Adding middleware causes duplicate header errors.
+
+### ⚠️ Calling Advanced I/O Functions from Slate (Cross-Domain — Required)
+
+> **This is the most common blocker when combining Slate with Advanced I/O functions.**
+
+Slate apps are served from `*.onslate.com`. Advanced I/O functions are on `*.catalystserverless.com`. **These are different domains.** This means:
+
+- **Relative paths like `/server/{function_name}/execute` DO NOT work** — they resolve to `onslate.com/server/...` which doesn't exist. Slate serves `index.html` for all unknown routes, so you get HTML back instead of JSON, causing `Unexpected token '<', "<!doctype"... is not valid JSON` errors.
+- **Cookie-based auth (`credentials: 'include'`) does not work** cross-domain without specific CORS setup.
+
+**Solution — use `generateAuthToken()` with the full function URL:**
+
+```js
+// Build the full function URL (NOT a relative path)
+const FUNCTION_URL = 'https://{project-domain}.development.catalystserverless.com/server/{function_name}/execute';
+
+async function callFunction(params = {}) {
+  // Get short-lived auth token from the Web SDK
+  const tokenRes = await window.catalyst.auth.generateAuthToken();
+  const token = tokenRes.content.token;
+
+  const url = new URL(FUNCTION_URL);
+  // Add query params if needed
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  const res = await fetch(url.toString(), {
+    method: 'GET', // or 'POST' with body
+    headers: {
+      'Authorization': `Zoho-catalyst-appsail ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  return res.json();
+}
+```
+
+**Required console setup — CORS whitelist:**
+
+Go to **Catalyst Console → Authentication → Authorized Domains (CORS)** and add both domains:
+- `https://{your-app}.onslate.com` (your Slate frontend)
+- `https://{project-domain}.development.catalystserverless.com` (your functions)
+
+Without this, the browser blocks the cross-domain fetch entirely.
+
+> **Tip:** The `{project-domain}` is in `.catalystrc` → `project_domain`. Example: `myapp-60019947973.development.catalystserverless.com`.
 
 ---
 
@@ -406,3 +465,5 @@ const allVars = await env.getAll();
 | Sign-out not working / crashes                 | `signOut()` called without redirect URL argument           | Pass a redirect URL: `catalyst.auth.signOut(redirectURL)`. `constructSignOutUrl()` does not exist. |
 | `getCurrentUser is not a function`             | Method does not exist in Web SDK                           | Use `catalyst.auth.isUserAuthenticated()` — resolves with full user object                    |
 | Embedded iFrame won't load                    | Div ID mismatch or CSP blocking                            | Verify the div `id` matches, check Content-Security-Policy headers allow Zoho iFrame origins |
+| `/__catalyst/auth/login` returns 404          | Hosted Authentication not enabled in console               | Console → Authentication → Login → enable Hosted Authentication                              |
+| `isUserAuthenticated` rejects but nothing happens | SDK does NOT auto-redirect to login                     | Add `window.location.href = '/__catalyst/auth/login'` in the `.catch()` block                |
