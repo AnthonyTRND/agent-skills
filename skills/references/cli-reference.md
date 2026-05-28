@@ -150,11 +150,46 @@ catalyst functions:setup
 ```
 
 ### `catalyst functions:add`
-Add a new function to the project. This is interactive and prompts for function type, language, etc.
+Add a new function to the project. **This is fully interactive** — it prompts for function name, type (arrow keys), and stack (arrow keys). There are NO non-interactive flags (unlike `init`, `appsail:add`, and `slate:create` which all support flags).
 
 ```bash
-catalyst functions:add
+catalyst functions:add    # ⚠️ ALWAYS interactive — no --name/--type/--stack flags exist
 ```
+
+**Known limitation for AI agents:** This is the only setup command that cannot be automated. The user MUST run it interactively for the first function in a project.
+
+**Agent workaround for subsequent functions:** Once the user has run `functions:add` at least once (so `catalyst.json` has a populated `functions` block), agents can add more functions by manually:
+1. Creating the directory: `functions/<new_function_name>/`
+2. Adding `functions/<new_function_name>/catalyst-config.json`:
+   ```json
+   {
+     "deployment": {
+       "name": "<new_function_name>",
+       "type": "advancedio",
+       "stack": "node20"
+     },
+     "execution": {
+       "main": "index.js"
+     }
+   }
+   ```
+   Valid `type` values: `basicio`, `advancedio`, `event`, `cron`, `job`, `integration`, `browserlogic`
+   Valid `stack` values: `node20`, `node18`, `node16`, `node14`, `java17`, `java11`, `java8`, `python39`
+   (Prefer `node20` for new projects — `node14`/`node16` receive no upstream security patches)
+3. Adding the function name to `catalyst.json` → `functions.targets` array:
+   ```json
+   {
+     "functions": {
+       "targets": ["existing_function", "new_function_name"],
+       "ignore": [],
+       "source": "functions"
+     }
+   }
+   ```
+4. Creating the entry point file (`index.js`, `main.py`, etc.) with the correct handler signature
+5. Running `npm init -y && npm install zcatalyst-sdk-node` in the function directory (for Node.js)
+
+**Important:** This workaround only works when `catalyst.json` already has a `functions` block from a prior `functions:add`. If no function has ever been registered, the user must run `functions:add` interactively first.
 
 ### `catalyst client:setup`
 Set up the client (frontend) directory in the current project.

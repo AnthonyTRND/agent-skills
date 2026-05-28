@@ -33,7 +33,8 @@ Catalyst uses **pay-per-use** pricing. Key facts:
 
 ## Complete Pricing Table
 
-All prices in USD.
+All prices listed below are in **USD**. See the [Currency & Regional Pricing](#currency--regional-pricing)
+section at the bottom for INR and other currency guidance.
 
 ### Serverless
 
@@ -265,6 +266,34 @@ Cost = 500 × $0.000016 = $0.008
 
 The free tier of 25,000 GB-seconds is shared across ALL function executions regardless of memory size.
 
+### Cost per invocation by memory tier
+
+The base rate is $0.000016 per GB-second. Since different functions use different memory sizes,
+here's what a **single 1-second invocation** costs at each memory tier:
+
+| Memory (MB) | GB fraction | Cost per 1-sec invocation (USD) | 10K invocations/month (USD) | 100K invocations/month (USD) |
+|-------------|-------------|-------------------------------|----------------------------|------------------------------|
+| 128 | 0.125 | $0.000002 | $0.02 | $0.20 |
+| 256 | 0.250 | $0.000004 | $0.04 | $0.40 |
+| 384 | 0.375 | $0.000006 | $0.06 | $0.60 |
+| 512 | 0.500 | $0.000008 | $0.08 | $0.80 |
+| 640 | 0.625 | $0.000010 | $0.10 | $1.00 |
+| 768 | 0.750 | $0.000012 | $0.12 | $1.20 |
+| 896 | 0.875 | $0.000014 | $0.14 | $1.40 |
+| 1024 | 1.000 | $0.000016 | $0.16 | $1.60 |
+
+**Formula:** `Cost per invocation = (Memory MB / 1024) × Execution seconds × $0.000016`
+
+**Key insight:** A 128MB function is **8× cheaper per second** than a 1024MB function. Choose the
+smallest memory that doesn't cause timeouts — this has a significant impact at scale.
+
+> **Example:** An app makes 50,000 API calls/month, each function runs for 1.5 seconds:
+> - At 1024MB: 50,000 × 1.5 × 1.0 = 75,000 GB-sec → (75,000 - 25,000 free) × $0.000016 = **$0.80/month**
+> - At 256MB: 50,000 × 1.5 × 0.25 = 18,750 GB-sec → **$0.00/month** (within free tier!)
+
+When building pricing estimates, always ask about the function's configured memory size — defaulting
+to 1024MB will significantly overestimate costs for most workloads.
+
 ---
 
 ## Generating a Pricing Spreadsheet
@@ -416,3 +445,36 @@ These are rough order-of-magnitude estimates for orientation:
 | E-commerce (medium) | $20–$200 | Data Store, Cache, Functions, Mail |
 
 These are illustrative only — always build a detailed estimate for the specific use case.
+
+---
+
+## Currency & Regional Pricing
+
+### How Catalyst billing currency works
+
+Catalyst invoices in the **currency attached to the credit card on file**. The pricing page at
+https://catalyst.zoho.com/pricing.html automatically displays prices in the user's regional currency
+(USD, INR, EUR, etc.) based on the account's data center.
+
+- **US data center** → USD pricing
+- **IN data center** → INR pricing
+- **EU data center** → EUR pricing
+- **AU, JP, SA, CA** → respective local currencies
+
+### INR pricing guidance
+
+Catalyst's pricing page shows INR rates when accessed from an India DC account. The exact INR values
+are set by Zoho and are **not simply USD × exchange rate** — they are region-specific rates.
+
+**When a user asks for INR pricing:**
+1. Direct them to https://catalyst.zoho.com/pricing.html (it auto-detects region)
+2. If they need a programmatic check, the pricing calculator on that page shows INR values for IN DC accounts
+3. For estimates in this skill, all values are in USD. Add a note:
+   > "These estimates are in USD. For INR pricing, visit https://catalyst.zoho.com/pricing.html
+   > from your Catalyst account — it will show rates in your account's billing currency."
+
+**When building a pricing spreadsheet for an INR user:**
+- Add a "Currency" cell in the Key Assumptions sheet (default: USD)
+- Add an "Exchange Rate" cell (for approximate conversion if exact INR rates are unavailable)
+- Note that the user should verify against the official pricing page for exact INR rates
+- The minimum billing of $5/project/month translates to the INR equivalent shown on the pricing page
