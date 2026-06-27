@@ -3,7 +3,7 @@ name: catalyst-functions
 description: "Catalyst serverless functions — all 7 types (Basic I/O, Advanced I/O, Event, Cron, Job, Integration, Browser Logic), handler signatures, catalyst-config.json, Security Rules, API Gateway routing, file uploads, busboy, Express middleware, environment variables, function URL, and function testing. Trigger on 'write a function', 'catalyst function', 'API Gateway', 'Security Rules', 'function not found', 'function returns 401', 'busboy', 'middleware', 'function URL', 'environment variable in function', or any function type question. Do NOT use for persistent servers, long-running processes, WebSockets, or Docker deployments — use catalyst-appsail instead."
 compatibility: "Requires Catalyst CLI (`npm install -g zcatalyst-cli`) and Node.js v20 (recommended; v14–v18 also supported). Java functions also require JDK 8, 11, or 17. Python functions require Python 3.9."
 metadata:
-   version: "2.0.2"
+   version: "2.0.1"
 ---
 
 ## How It Works
