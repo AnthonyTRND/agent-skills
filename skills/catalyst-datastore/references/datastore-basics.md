@@ -255,6 +255,5 @@ Data Store does NOT support multi-statement transactions.
 |-------|-------|-----|
 | `HTTP 429 Too Many Requests` on bulk write | Bulk write queue is full | Reduce batch size; implement exponential backoff; contact Catalyst support to increase limit |
 | ZCQL returns fewer rows than expected | ZCQL SELECT hard limit is **300 rows** per query (not 200) | Paginate with `LIMIT offset, 300` — e.g., `LIMIT 0, 300`, then `LIMIT 300, 300`; for full-table scans use `getPagedRows()` (default: 200 rows per page; returns `{ data, next_token, more_records }`) |
-| ZCQL silently hangs in Job/Cron/Event function | `catalyst.initialize(context)` without `scope: 'admin'` makes unauthenticated requests | Use `catalyst.initialize(context, { scope: 'admin' })` in non-HTTP function types |
 | `Column not found` on insert | Column name case mismatch or column not yet created | Column names are case-sensitive; verify in Console → Data Store |
 | `ZCQL query exceeds 20-column SELECT limit` | ZCQL limits SELECT to 20 columns per query | Split into multiple queries or use `SELECT *` (counts as 1) |

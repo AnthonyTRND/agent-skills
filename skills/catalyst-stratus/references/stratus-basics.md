@@ -23,6 +23,9 @@ const bucket = stratus.bucket('my-bucket');
 await bucket.putObject('data/file.json', JSON.stringify(data), {
   contentType: 'application/json'
 });
+// ⚠️ Default overwrite is false — if the key already exists and versioning is OFF,
+// putObject will throw 409 (key_already_exists). Pass overwrite: true to replace it.
+await bucket.putObject('data/file.json', newData, { overwrite: true });
 
 // Download — returns a Readable stream; consume it to get the data
 const fileStream = await bucket.getObject('data/file.json');
@@ -95,16 +98,34 @@ await bucket.completeMultipartUpload('large-file.zip', uploadId);
 
 ## Signed URLs (time-limited access)
 
+> **Requires admin scope**: `catalyst.initialize(req, { scope: 'admin' })`
+>
+> `'GET'` action = **download-only** URL (use with HTTP GET). `'PUT'` action = **upload-only** URL (use with HTTP PUT).
+> A GET-signed URL cannot be used for upload and vice versa — using the wrong method returns 403.
+> For in-function reads, prefer `bucket.getObject()` directly over signed URLs.
+
 ```javascript
 // generatePreSignedUrl(key, action, options?)
-// action: 'GET' (download) or 'PUT' (upload)
-const result = await bucket.generatePreSignedUrl('confidential-report.pdf', 'GET', {
-  expiryIn: 3600,       // expiry time in seconds (default: 3600)
-  // activeFrom: '...',  // optional: Unix timestamp — URL inactive before this
-  // versionId: '...'    // optional: for versioned objects
+const catalystApp = catalyst.initialize(req, { scope: 'admin' });
+const bucket = catalystApp.stratus().bucket('my-bucket');
+
+// Generate a DOWNLOAD URL ('GET')
+const downloadRes = await bucket.generatePreSignedUrl('report.pdf', 'GET', {
+  expiryIn: 3600,        // seconds (default: 3600, max: 7 days, min: 30)
+  // activeFrom: '...',  // optional: Unix timestamp ms — URL inactive before this
+  // versionId: '...'    // optional: for versioned objects (GET only)
 });
-const url = result.signature;
-// Share this URL — no auth needed to download within the expiry window
+const downloadUrl = downloadRes.signature;
+// Share downloadUrl — recipient uses HTTP GET to download
+
+// Generate an UPLOAD URL ('PUT')
+const uploadRes = await bucket.generatePreSignedUrl('incoming/file.pdf', 'PUT', {
+  expiryIn: 300,
+});
+const uploadUrl = uploadRes.signature;
+// Recipient uses HTTP PUT to upload:
+// axios.put(uploadUrl, fileStream)
+// To overwrite an existing key via signed URL, add header: { overwrite: 'true' }
 ```
 
 ---
@@ -185,7 +206,9 @@ module.exports = async (req, res) => {
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `NoSuchBucket` on first upload | Bucket not yet created in Console | Create bucket via Console → Stratus or MCP before any SDK call |
-| Signed URL returns 403 | URL expired (default 15 min) or bucket permissions don't allow public access | Regenerate URL; set bucket ACL to allow anonymous reads if files must be public |
-| Multipart upload never completes | `completeMultipartUpload()` not called after all parts uploaded | Always call `completeMultipartUpload` with the upload ID and part ETags |
+| `409 key_already_exists` | `putObject` called on an existing key with versioning OFF and `overwrite` not set (default `false`) | Pass `{ overwrite: true }` in options: `bucket.putObject(key, body, { overwrite: true })` |
+| Signed URL returns 403 | URL expired, wrong HTTP method used (GET URL used for PUT or vice versa), or bucket permissions too restrictive | Regenerate URL; ensure GET URL is used with HTTP GET and PUT URL with HTTP PUT |
+| `generatePreSignedUrl` fails with auth error | Not initialized with admin scope | Use `catalyst.initialize(req, { scope: 'admin' })` before calling `generatePreSignedUrl` |
+| Multipart upload never completes | `completeMultipartUpload()` not called after all parts uploaded | Always call `completeMultipartUpload(key, uploadId)` after all parts are done |
 | `busboy` + Stratus: file only partially written | Stream piped to Stratus before `busboy` `file` event fully received | Buffer the stream or use the Stratus pre-signed URL pattern for large files |
 | Object path returns stale content | CDN edge cache not yet invalidated | Stratus doesn't have built-in cache invalidation — append a version query param or use a unique path per upload |

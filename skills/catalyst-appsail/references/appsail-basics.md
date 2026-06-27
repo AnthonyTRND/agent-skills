@@ -184,18 +184,30 @@ catalyst deploy appsail \
 
 ## Environment Variables
 
-Two paths depending on how the app was deployed:
+### Source of Truth Rules (Runtime-Confirmed)
 
-**CLI-initialized apps** (`catalyst appsail:add`):
-- Set `env_variables` in `app-config.json` — values are applied at deploy time and reflected in Console
-- Console edits made post-deploy are also applied immediately
-- On the next `catalyst deploy appsail`, values in `app-config.json` push to Console again
+**CLI-initialized apps** (have `app-config.json`):
+- `app-config.json` is the **single source of truth** on every `catalyst deploy appsail`
+- On deploy: the runtime applies exactly what is in `env_variables` — Console-set vars are **replaced**
+- **With any variables defined** in `env_variables`: Console-set vars not in the file are **wiped completely**
+- **With `"env_variables": {}`** (empty): Console UI still shows vars, but they are **not applied to the runtime** — the service cannot see them
+- **Rule:** For CLI-managed services, define ALL env vars in `app-config.json`. Never rely on Console-set vars surviving a redeploy.
 
-**Standalone deploys** (no init/add, or console-deployed apps):
-- No `app-config.json` is created; configure env vars in the Console only
-- Console → AppSail → \<service\> → Configuration → Environment Variables
+```json
+{
+  "command": "node server.js",
+  "stack": "node24",
+  "memory": 256,
+  "env_variables": {
+    "API_KEY": "your_value",
+    "DATABASE_URL": "your_value"
+  }
+}
+```
 
-> ⚠️ **Verify env vars after every deploy.** Console values are overwritten by `app-config.json` on each deploy. Any secret you set manually in the Console may be silently replaced.
+**Console-managed apps** (standalone deploy or Console UI — no `app-config.json`):
+- Console is the only source of truth; configure via Console → AppSail → \<service\> → Configuration → Environment Variables
+- These vars survive redeploys done from the Console but will be overwritten if a CLI deploy with `app-config.json` is ever run
 
 > ⚠️ **Avoid `CATALYST` in user-defined env var key names.** The AppSail runtime injects its own `CATALYST_*` system vars (`CATALYST_PROJECT_ID`, `CATALYST_MAX_TIMEOUT`, `CATALYST_USER_ENVIRONMENT`, `CATALYST_PROJECT_TIMEZONE`). User-defined keys with `CATALYST` in the name may conflict or be rejected — use `ZOHO_` prefix or a plain name without `CATALYST` to be safe. Runtime-confirmed system vars injected automatically: `X_ZOHO_CATALYST_LISTEN_PORT`, `X_ZOHO_CATALYST_ENVIRONMENT`, `X_ZOHO_CATALYST_RESOURCE_ID`, `X_ZOHO_CATALYST_RUNTIME_MEMORY`, `X_ZOHO_CATALYST_ACCOUNTS_URL`, `X_ZOHO_CATALYST_CONSOLE_URL`, `CATALYST_PROJECT_ID`, `CATALYST_MAX_TIMEOUT`, `CATALYST_USER_ENVIRONMENT`, `CATALYST_PROJECT_TIMEZONE`.
 
@@ -254,10 +266,10 @@ Configure via Console → Domain Mapping.
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| Env var missing after deploy | `app-config.json` was redeployed with a different or empty `env_variables` block, overwriting Console-set values | Keep all env vars in `app-config.json`; treat Console as read-only verification |
+| Runtime env var missing after CLI deploy (var was set in Console) | `app-config.json` redeploy replaces runtime env vars with exactly what's in `env_variables` — Console-set vars not in the file are wiped from the runtime | Add ALL required vars to `app-config.json`; never rely on Console-only vars for CLI-managed services |
+| Console UI shows env vars but runtime can't see them | `"env_variables": {}` is empty — Console UI preserves display values but does NOT apply them to the runtime on deploy | Add the vars to `env_variables` in `app-config.json` and redeploy |
 | Env var key conflicts with system var | AppSail runtime injects its own `CATALYST_*` and `X_ZOHO_CATALYST_*` vars; user-defined keys with same name are overwritten | Avoid `CATALYST` in user-defined key names; use `ZOHO_` prefix or plain names |
 | App fails to start — port not listening | App bound to a hardcoded port instead of `X_ZOHO_CATALYST_LISTEN_PORT`, OR `--build-path` was a relative path | Use `process.env.X_ZOHO_CATALYST_LISTEN_PORT \|\| 9000` as the port; always use an **absolute path** for `--build-path` |
 | `catalyst deploy appsail` stalls or prompts | No `--source` flag provided — CLI defaults to interactive managed runtime menus | Use `--name` and `--source docker://...` flags for non-interactive Docker deploy |
 | Managed runtime initialized instead of Docker Image | Selected wrong option in `catalyst appsail:add` interactive menu | Delete the AppSail entry from `catalyst.json`, then re-run `catalyst appsail:add` and select **Docker Image** |
 | `catalyst deploy appsail` ignores code changes | Ran without `--source` flag and no prior init — CLI prompted for config | Use standalone flags `--name`/`--source`, or run `catalyst appsail:add` interactively first |
-| Console shows old env values after deploy | Deploy applied `app-config.json` values, overwriting Console edits | Update `app-config.json` to reflect intended values before deploying |

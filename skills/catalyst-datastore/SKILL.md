@@ -2,7 +2,7 @@
 name: catalyst-datastore
 description: "Catalyst Data Store — relational cloud database with ZCQL, CRUD operations, table permissions, and result pagination. Trigger on 'Data Store', 'ZCQL', 'create table', 'executeZCQLQuery', 'table permissions', or 'ROWID'. You MUST load this skill whenever writing code that reads or writes Data Store data — ZCQL result wrapping and App User permissions are non-obvious and cause silent bugs if skipped."
 metadata:
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 ## How It Works
