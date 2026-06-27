@@ -28,7 +28,8 @@ metadata:
 
 3. **Pre-flight sequence** — Always run `CatalystbyZoho_List_All_Organizations` → `CatalystbyZoho_List_All_Projects` first to set project context before any other MCP tool call.
 4. **Load `references/zoho-mcp.md`** — for the full tool catalog, execution flow, and common error fixes.
-5. **Answer** — Call the appropriate `CatalystbyZoho_*` tool directly. Show the user what tool was called and what it returned.
+5. **If the query involves DataStore** (create table, add columns, query data) — also load `references/mcp-datastore.md`.
+6. **Answer** — Call the appropriate `CatalystbyZoho_*` tool directly. Show the user what tool was called and what it returned.
 
 ## Triggers
 
@@ -39,3 +40,4 @@ Use this skill for: "Zoho MCP", "MCP tools", "catalyst MCP", "create table with 
 | Reference | Load when the query is about… |
 |-----------|-------------------------------|
 | `references/zoho-mcp.md` | Global MCP server setup (all 3 clients), all available CatalystbyZoho_* tools, execution flow, org→project pre-flight sequence, common MCP errors |
+| `references/mcp-datastore.md` | Creating tables/columns via MCP, DataStore column types, batch column creation, data type constraints |

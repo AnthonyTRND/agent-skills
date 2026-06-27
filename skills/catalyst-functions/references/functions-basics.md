@@ -86,10 +86,14 @@ Required `catalyst.json` schema for a functions project:
 | Basic I/O | 30 seconds | Returns 504 |
 | Advanced I/O | 30 seconds | Returns 504 |
 | Event | 15 minutes | Silently terminated |
-| Cron | 15 minutes | Marked as failed |
+| Cron | **15 minutes** (900,000ms) | Marked as failed |
 | Integration | 30 seconds | Error to calling Zoho service |
-| Job | 15 minutes | Marked as failed |
+| Job | **15 minutes** (900,000ms) | Marked as failed |
 | Browser Logic | 30 seconds | Browser instance terminated |
+
+**Runtime-confirmed limits:** Cron and Job functions can query their max execution time via `context.getMaxExecutionTimeMs()` — returns `"900000"` (STRING, not number). Advanced I/O has a 30-second limit but no runtime API to read it.
+
+**Immediate vs scheduled jobs:** Jobs submitted via `job.submitJob()` or the Catalyst API (immediate/instant jobs) have the **same 15-minute timeout** as scheduled Job functions — runtime-confirmed (2min 11s sleep completed successfully).
 
 For tasks exceeding 30s, use Event/Job/Cron (15-min limit).
 For tasks exceeding 15 min, use AppSail (no timeout).
