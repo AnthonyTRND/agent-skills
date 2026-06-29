@@ -127,6 +127,58 @@ Boolean res = bucket.putObject("sam/out/sample.txt", file, options);
 
 ---
 
+## REST API — PUT Object (Upload)
+
+```
+PUT https://{bucket_name}.zohostratus.com/{key}
+```
+
+> Development environment: `https://{bucket_name}-development.zohostratus.com/{key}`
+
+**Required header:**
+- `Authorization: Zoho-oauthtoken {oauth_token}`
+
+**Optional headers:**
+
+| Header | Description |
+|--------|-------------|
+| `overwrite` | Set to `true` to replace an existing object. Only works on **non-versioned** buckets. Omit (default) to get `409 key_already_exists` if key exists. |
+| `content-type` | MIME type of the object (e.g., `application/json`) |
+| `content-length` | Raw length of the object in bytes |
+| `compress` | Whether to compress while storing (compression is on by default) |
+| `cache-control` | Browser caching policy |
+| `expires-after` | TTL in seconds (min: 60) — object is auto-deleted after this duration |
+| `x-user-meta:{key}={value};...` | Object metadata; max 2047 characters total |
+
+**OAuth scope required:** `Stratus.fileop.CREATE`
+
+**Example:**
+```bash
+curl -X PUT https://{bucket_name}.zohostratus.com/{key} \
+  -H "Authorization: Zoho-oauthtoken {oauth_token}" \
+  -H "overwrite: true" \
+  -H "content-type: application/json" \
+  --data-binary @file.json
+```
+
+**Via signed PUT URL** — pass `overwrite` as a regular HTTP header in the PUT request:
+```javascript
+await axios.put(signedUrl, fileStream, {
+  headers: { 'overwrite': 'true' }
+});
+```
+
+**Failure responses:**
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| `409` | `key_already_exists` | Object with same key exists and `overwrite` header not set |
+| `404` | `bucket_not_found` | Bucket does not exist |
+| `403` | `access_forbidden` | Missing required permissions |
+| `400` | `key_name_invalid` | Key contains unsupported characters |
+
+---
+
 ## Upload Size Limits
 
 - **Single-shot upload**: up to **250 GB** per object

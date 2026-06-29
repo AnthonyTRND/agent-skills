@@ -2,7 +2,7 @@
 name: catalyst-stratus
 description: "Catalyst Stratus — S3-compatible object storage with upload/download, signed URLs, and multipart upload support. Trigger on 'Stratus', 'object storage', 'upload file', 'signed URL', 'putObject', 'getObject', or 'bucket'."
 metadata:
-  version: "2.1.0"
+  version: "2.1.1"
 ---
 
 ## How It Works
