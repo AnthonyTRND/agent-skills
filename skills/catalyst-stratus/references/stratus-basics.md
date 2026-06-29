@@ -60,6 +60,73 @@ const exists = await stratus.headBucket('my-bucket');
 
 ---
 
+## SDK Operations (Python)
+
+```python
+import zcatalyst_sdk
+
+app = zcatalyst_sdk.initialize()
+stratus = app.stratus()
+bucket = stratus.bucket('my-bucket')
+
+# Upload as stream
+file = open('file_path', 'rb')
+res = bucket.put_object('sam/out/sample.txt', file)
+
+# Upload as string
+res = bucket.put_object('sam/out/sample.txt', 'content of the file')
+
+# Upload with options — overwrite is only for non-versioned buckets; default is false
+options = {
+    'overwrite': 'true',   # replaces existing object; omit or set 'false' to raise 409
+    'ttl': '300',          # time-to-live in seconds (min: 60)
+    'meta_data': {'author': 'John'},
+    'content_type': 'application/json'
+}
+file = open('file_path', 'rb')
+res = bucket.put_object('sam/out/sample.txt', file, options)
+
+# Download
+obj = bucket.get_object('sam/out/sample.txt')
+
+# Delete
+bucket.delete_object('sam/out/sample.txt')
+```
+
+---
+
+## SDK Operations (Java)
+
+```java
+import com.zc.component.stratus.ZCStratus;
+import com.zc.component.stratus.ZCBucket;
+import com.zc.component.stratus.beans.ZCPutObjectOptions;
+import java.io.InputStream;
+import java.io.FileInputStream;
+
+ZCStratus stratus = ZCStratus.getInstance();
+ZCBucket bucket = stratus.bucketInstance("my-bucket");
+
+// Upload as stream
+InputStream file = new FileInputStream("filePath");
+Boolean res = bucket.putObject("sam/out/sample.txt", file);
+
+// Upload as string
+Boolean res = bucket.putObject("sam/out/sample.txt", "content of the file");
+
+// Upload with options — setOverwrite() is only for non-versioned buckets; default is false
+ZCPutObjectOptions options = ZCPutObjectOptions.getInstance();
+options.setOverwrite("true");   // replaces existing object; omit to raise 409
+options.setTTL("1000");         // time-to-live in seconds (min: 60)
+Map<String, String> metaData = new HashMap<>();
+metaData.put("author", "John");
+options.setMetaData(metaData);
+InputStream file = new FileInputStream("filePath");
+Boolean res = bucket.putObject("sam/out/sample.txt", file, options);
+```
+
+---
+
 ## Upload Size Limits
 
 - **Single-shot upload**: up to **250 GB** per object
