@@ -104,6 +104,72 @@ For the full catalog of available tools, check your AI client's tool list after 
 
 ---
 
+## MCP-First Workflow
+
+### Golden Rule: "MCP First, Console Fallback"
+
+When an AI agent needs to create or manage Catalyst infrastructure (tables, cache segments, buckets, job pools), **always try MCP tools first**. Only fall back to the Catalyst Console UI if MCP is unavailable or fails.
+
+| Approach | Time | Repeatable | Auditable |
+|----------|------|-----------|-----------|
+| ✅ MCP tools | ~30 seconds | Yes | Yes (in conversation) |
+| ❌ Console UI | 5+ minutes | No | No |
+
+### Decision Tree
+
+```
+Need to create Catalyst infrastructure?
+        │
+        ▼
+Are CatalystbyZoho_* tools visible in tool list?
+        │
+   YES──┘──NO
+   │          │
+   ▼          ▼
+Use MCP    Guide user to set up Zoho MCP first
+tools      (see Setup section above)
+  ✅        Then retry with MCP tools
+```
+
+**Only instruct manual Console steps when:**
+- MCP config is not set up AND user cannot set it up right now
+- MCP tools fail with an unresolvable error
+- User explicitly requests a manual UI walkthrough
+
+### Example: Table Creation
+
+❌ **Manual Console (5+ minutes)**
+```
+1. Open https://console.catalyst.zoho.com
+2. Navigate to project → Data Store
+3. Click Create Table, enter name
+4. Add each column manually via the UI
+5. Click Create
+```
+
+✅ **MCP (30 seconds)**
+```javascript
+// One tool call — everything automated
+CatalystbyZoho_Create_Table({
+  table_name: "Todos",
+  columns: [
+    { name: "title", data_type: "text", mandatory: true },
+    { name: "completed", data_type: "boolean", default_value: "false" }
+  ]
+})
+```
+
+### Pre-flight Check for AI Agents
+
+Before instructing a user to open the Catalyst Console for any infrastructure task:
+
+1. Check if `CatalystbyZoho_*` tools are in the available tool list
+2. If YES → use the appropriate `CatalystbyZoho_*` tool directly
+3. If NO → load `references/zoho-mcp.md` and guide the user through MCP setup first
+4. Only after exhausting MCP options → provide manual Console instructions
+
+---
+
 ## Common Patterns
 
 ### Create a table from schema description

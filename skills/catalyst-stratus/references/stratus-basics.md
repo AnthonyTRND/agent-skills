@@ -25,6 +25,7 @@ await bucket.putObject('data/file.json', JSON.stringify(data), {
 });
 // ⚠️ Default overwrite is false — if the key already exists and versioning is OFF,
 // putObject will throw 409 (key_already_exists). Pass overwrite: true to replace it.
+// Overwrite is atomic — no delete-then-put needed; the replacement happens in a single operation.
 await bucket.putObject('data/file.json', newData, { overwrite: true });
 
 // Download — returns a Readable stream; consume it to get the data
@@ -142,7 +143,7 @@ PUT https://{bucket_name}.zohostratus.com/{key}
 
 | Header | Description |
 |--------|-------------|
-| `overwrite` | Set to `true` to replace an existing object. Only works on **non-versioned** buckets. Omit (default) to get `409 key_already_exists` if key exists. |
+| `overwrite` | Set to `true` to replace an existing object. Only works on **non-versioned** buckets. Omit (default) to get `409 key_already_exists` if key exists. The replacement is atomic — no delete-then-put pattern is needed. |
 | `content-type` | MIME type of the object (e.g., `application/json`) |
 | `content-length` | Raw length of the object in bytes |
 | `compress` | Whether to compress while storing (compression is on by default) |
@@ -217,34 +218,137 @@ await bucket.completeMultipartUpload('large-file.zip', uploadId);
 
 ## Signed URLs (time-limited access)
 
-> **Requires admin scope**: `catalyst.initialize(req, { scope: 'admin' })`
->
-> `'GET'` action = **download-only** URL (use with HTTP GET). `'PUT'` action = **upload-only** URL (use with HTTP PUT).
-> A GET-signed URL cannot be used for upload and vice versa — using the wrong method returns 403.
-> For in-function reads, prefer `bucket.getObject()` directly over signed URLs.
+**When to use signed URLs vs SDK directly:**
+
+| Use case | Approach |
+|----------|----------|
+| Share a download link with a browser, mobile app, or external user | Signed URL (`'GET'`) |
+| Accept a file upload directly from a client without routing through your function | Signed URL (`'PUT'`) |
+| Read or write an object inside a Catalyst function | SDK directly (`getObject()` / `putObject()`) |
+| Process, transform, or pipeline objects server-side | SDK directly |
+
+Signed URLs are for **client-facing access** — giving unauthenticated users temporary, scoped access to a specific object. For any operation happening *within* a function, use the SDK directly; it is simpler, avoids an extra network round-trip, and does not require admin scope.
+
+> **Requires admin scope** to generate. `'GET'` action = **download-only** (recipient uses HTTP GET). `'PUT'` action = **upload-only** (recipient uses HTTP PUT).
+> A GET-signed URL cannot be used for upload and vice versa — wrong method returns 403.
+
+**Direction / action summary:**
+
+| Direction | SDK action value | HTTP method to consume | OAuth scope to generate | `versionId` supported? |
+|-----------|-----------------|----------------------|------------------------|------------------------|
+| Download  | `'GET'` / `URL_ACTION.GET` | `GET` | `ZohoCatalyst.buckets.objects.READ` | Yes (GET only) |
+| Upload    | `'PUT'` / `URL_ACTION.PUT` | `PUT` | `ZohoCatalyst.buckets.objects.CREATE` | No |
+
+**Options (all SDKs):**
+- `expiry` / `expiryIn` / `expiry_in_sec` — URL validity in seconds. Default: 3600, min: 30, max: 7 days.
+- `activeFrom` / `active_from` — Unix timestamp (ms) from when the URL becomes active. Default: active immediately.
+- `versionId` / `version_id` — Download a specific version (GET only).
+
+---
+
+### Node.js SDK
 
 ```javascript
-// generatePreSignedUrl(key, action, options?)
 const catalystApp = catalyst.initialize(req, { scope: 'admin' });
 const bucket = catalystApp.stratus().bucket('my-bucket');
 
-// Generate a DOWNLOAD URL ('GET')
+// Generate a DOWNLOAD URL
 const downloadRes = await bucket.generatePreSignedUrl('report.pdf', 'GET', {
-  expiryIn: 3600,        // seconds (default: 3600, max: 7 days, min: 30)
-  // activeFrom: '...',  // optional: Unix timestamp ms — URL inactive before this
-  // versionId: '...'    // optional: for versioned objects (GET only)
+  expiryIn: 3600,
+  // activeFrom: '1716382375000',  // optional: Unix timestamp ms
+  // versionId: '746398diij94839'  // optional: GET only
 });
 const downloadUrl = downloadRes.signature;
-// Share downloadUrl — recipient uses HTTP GET to download
+// Recipient: axios.get(downloadUrl, { responseType: 'stream' })
 
-// Generate an UPLOAD URL ('PUT')
+// Generate an UPLOAD URL
 const uploadRes = await bucket.generatePreSignedUrl('incoming/file.pdf', 'PUT', {
   expiryIn: 300,
 });
 const uploadUrl = uploadRes.signature;
-// Recipient uses HTTP PUT to upload:
-// axios.put(uploadUrl, fileStream)
-// To overwrite an existing key via signed URL, add header: { overwrite: 'true' }
+// Recipient: axios.put(uploadUrl, fileStream, { headers: { 'overwrite': 'true' } })
+```
+
+---
+
+### Python SDK
+
+```python
+from zcatalyst_sdk import catalyst
+
+app = catalyst.initialize()
+bucket = app.stratus().bucket('my-bucket')
+
+# Generate a DOWNLOAD URL
+download_res = bucket.generate_presigned_url(
+    'report.pdf',
+    url_action='GET',
+    expiry_in_sec='3600',
+    active_from='1023453725828',  # optional
+    version_id='jdery748tfge78'   # optional, GET only
+)
+download_url = download_res['signature']
+# Recipient: requests.get(download_url, stream=True)
+
+# Generate an UPLOAD URL
+upload_res = bucket.generate_presigned_url(
+    'incoming/file.pdf',
+    url_action='PUT',
+    expiry_in_sec='300'
+)
+upload_url = upload_res['signature']
+# Recipient: requests.put(upload_url, data=open('file', 'rb'))
+```
+
+---
+
+### Java SDK
+
+```java
+import com.zc.component.stratus.enums.URL_ACTION;
+import org.json.simple.JSONObject;
+
+// Generate a DOWNLOAD URL
+JSONObject downloadRes = bucket.generatePreSignedUrl("report.pdf", URL_ACTION.GET);
+String downloadUrl = (String) downloadRes.get("signature");
+// With expiry and activeFrom:
+// JSONObject downloadRes = bucket.generatePreSignedUrl("report.pdf", URL_ACTION.GET, "3600", "1716382375000");
+
+// Generate an UPLOAD URL
+JSONObject uploadRes = bucket.generatePreSignedUrl("incoming/file.pdf", URL_ACTION.PUT);
+String uploadUrl = (String) uploadRes.get("signature");
+// Recipient: OkHttpClient PUT request to uploadUrl
+```
+
+---
+
+### REST API — Generate Signed URL
+
+The same endpoint is used for both directions; the HTTP method of the *generation request* determines the direction:
+
+```
+# Generate a DOWNLOAD URL (GET method on the signing endpoint)
+GET {api-domain}/baas/v1/project/{project_id}/bucket/object/signed-url
+  ?bucket_name=myBucketName&object_key=report.pdf&expiry_in_seconds=3600
+  &active_from=1716382375000&version_id=bs22sb2923ey2hds929
+  -H "Authorization: Zoho-oauthtoken {token}"
+
+# Generate an UPLOAD URL (PUT method on the signing endpoint)
+PUT {api-domain}/baas/v1/project/{project_id}/bucket/object/signed-url
+  ?bucket_name=myBucketName&object_key=incoming/file.pdf&expiry_in_seconds=300
+  -H "Authorization: Zoho-oauthtoken {token}"
+```
+
+Response for both:
+```json
+{
+  "status": "success",
+  "data": {
+    "signature": "https://{bucket}.zohostratus.com/_signed/{key}?...",
+    "expires_in_seconds": 300,
+    "active_from": 1716382487000
+  }
+}
 ```
 
 ---
