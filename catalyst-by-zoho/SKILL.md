@@ -157,6 +157,50 @@ These services are **unavailable** in the listed data centers. Building with the
 
 ---
 
+## Non-Interactive Mode
+
+CLI v1.27.0+ supports non-interactive (NI) mode — the CLI takes all answers from flags and sensible defaults instead of prompting.
+
+**Enable:** Add `-ni` (or `--non-interactive`) to any supported command, or set `ZCATALYST_NON_INTERACTIVE=1` in the environment.
+
+**Disabled commands:** `functions:setup` → use `functions:add -ni`; `functions:shell` → use `functions:execute`
+
+**Blocked options:** `--remote` on `functions:delete` and `client:delete` is not allowed in NI mode.
+
+**Tip:** `catalyst <command> -ni --help` shows the NI-specific help for that command.
+
+---
+
+## `.catalystrc` — Reading org and project context
+
+After `catalyst init`, a `.catalystrc` file is written to the project root. Read it at the start of any session to identify the active project without asking the user.
+
+**Actual format:**
+```json
+{
+  "defaults": { "project": 1, "env": 1 },
+  "actives":  { "project": 1, "env": 1 },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "<projectId>",
+      "name": "<projectName>",
+      "domain": { "id": "<domainId>", "name": "<projectName>-<orgId>.development" },
+      "env": [{ "idx": 1, "id": "<envId>", "name": "Development", "type": 3 }]
+    }
+  ]
+}
+```
+
+**How to read the active project ID:**
+1. Read `defaults.project` → this is the active project's `idx` value (e.g. `2`)
+2. Find the entry in `projects` where `idx` matches → get its `id` (e.g. `"85698000000020076"`)
+3. That `id` is the project ID to use with `-p` in CLI commands
+
+**Org ID:** Not stored directly in `.catalystrc`. Use `CatalystbyZoho_List_All_Organizations` via MCP to get it, or read it from the Catalyst Console URL.
+
+---
+
 ## Quick-reference: Top gotchas
 
 - **TERMINOLOGY: always say "organization" or "org", NEVER "portal"** — the `catalyst init` CLI prompt says "Select a default Catalyst portal" but this is the CLI's legacy wording; the correct term is organization

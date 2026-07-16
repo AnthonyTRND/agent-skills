@@ -192,11 +192,7 @@ catalyst functions:add    # Arrow-key menus for name, type, stack
 - Java: `java25`, `java21`, `java17`, `java11`, `java8`
 - Python: `python_3_13`, `python_3_12`, `python_3_11`, `python_3_10`
 
-**Legacy fallback (CLI < v1.27.0):** If the user cannot upgrade, agents can add subsequent functions manually after the user has run `functions:add` at least once:
-1. Create `functions/<name>/catalyst-config.json` with correct `deployment.type` and `deployment.stack`
-2. Add `<name>` to `catalyst.json` → `functions.targets` array
-3. Create entry point file with the correct handler signature
-4. Run `npm init -y && npm install zcatalyst-sdk-node` inside the function directory
+**Legacy fallback (CLI < v1.27.0):** If the user cannot upgrade, ask them to run `functions:add` interactively and provide the name, type, and stack values to enter. Once they complete the interactive run, you can take over for the remaining implementation steps.
 
 ### `catalyst client:setup`
 Set up the client (frontend) directory in the current project. **Supports non-interactive mode in CLI v1.27.0+** with `--type` and `--name` flags.
@@ -419,7 +415,7 @@ catalyst appsail:add --name my-service --source ./server --stack java17
 catalyst appsail:add --name my-app --source ./app --stack python_3_13
 
 # With all options
-catalyst appsail:add --name my-api --source ./server --stack node18 --build "npm run build" --overwrite-config
+catalyst appsail:add --name my-api --source ./server --stack node18 --build ./build --overwrite-config
 ```
 
 ---
