@@ -186,17 +186,21 @@ const connection = catalystApp.connection();
 
 ## Retry Behavior
 
-| Function Type | Auto-retry on failure? |
-|---------------|----------------------|
-| Basic I/O | No |
-| Advanced I/O | No |
-| Event | Yes |
-| Cron | Yes |
-| Job | Yes |
-| Integration | No |
-| Browser Logic | No |
+| Function Type | Auto-retry on failure? | Notes |
+|---------------|----------------------|-------|
+| Basic I/O | No | |
+| Advanced I/O | No | |
+| Event | Yes | Platform retries automatically |
+| Cron | **No** | Failures trigger Application Alerts only — no automatic retry. Manual review and rerun required. |
+| Job | Configurable | Retry is set in `job_config.number_of_retries` when submitting the job (0–10 retries, min 1-min interval) |
+| Integration | No | |
+| Browser Logic | No | |
 
-Design Event/Cron/Job handlers to be **idempotent** (safe to run multiple times).
+> **Cron failure handling**: Configure Application Alerts (Console → Cloud Scale → Cron → Alerts) to receive email notifications when a cron fails, times out, or throws an exception. Review execution history from the console to debug and rerun.
+>
+> **50-consecutive-failures auto-disable** applies ONLY to crons associated with a **third-party URL** target — NOT to function-based crons. Function-based crons never auto-disable regardless of repeated failures.
+
+Design **Event** and **Job** handlers to be **idempotent** (safe to run multiple times). Cron handlers should also be idempotent to safely support manual reruns.
 
 ---
 

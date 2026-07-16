@@ -322,8 +322,15 @@ await job.submitJob({
 
 ```javascript
 const circuit = catalystApp.circuit();
-const result = await circuit.execute(circuitId, { key1: 'value1' });
+// Node.js SDK: 3 arguments — circuitId, executionName, inputJSON
+const result = await circuit.execute(circuitId, 'execution-name', { key1: 'value1' });
 ```
+
+> **Node.js vs Python SDK difference:**
+> - **Node.js**: `circuit.execute(circuitId, executionName, inputJSON)` — 3 arguments
+> - **Python**: `circuit.execute(circuit_id, input_json)` — 2 arguments (execution name auto-generated)
+>
+> `executionName` is a user-defined string label for this execution (used for tracking and logs).
 
 ---
 
