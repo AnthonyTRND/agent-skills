@@ -186,18 +186,16 @@ After `catalyst init`, a `.catalystrc` file is written to the project root. Read
       "id": "<projectId>",
       "name": "<projectName>",
       "domain": { "id": "<domainId>", "name": "<projectName>-<orgId>.development" },
-      "env": [{ "idx": 1, "id": "<envId>", "name": "Development", "type": 3 }]
+      "env": [{ "idx": 1, "id": "<orgId>", "name": "Development", "type": 3 }]
     }
   ]
 }
 ```
 
-**How to read the active project ID:**
-1. Read `defaults.project` → this is the active project's `idx` value (e.g. `2`)
-2. Find the entry in `projects` where `idx` matches → get its `id` (e.g. `"85698000000020076"`)
-3. That `id` is the project ID to use with `-p` in CLI commands
-
-**Org ID:** Not stored directly in `.catalystrc`. Use `CatalystbyZoho_List_All_Organizations` via MCP to get it, or read it from the Catalyst Console URL.
+**How to read the active project ID and org ID:**
+1. Read `defaults.project` → this is the active project's `idx` value
+2. Find the entry in `projects` where `idx` matches → get its `id` → this is the **project ID** to use with `-p`
+3. From the same entry, read `env[0].id` → this is the **org ID** to use with `--org`
 
 ---
 
