@@ -171,6 +171,8 @@ catalyst functions:add    # Arrow-key menus for name, type, stack
 | `--name` | Function name (alphanumeric + underscores) |
 | `--type` | Function type: `bio`, `aio`, `event`, `cron`, `job`, `integ`, `browserlogic` |
 | `--stack` | Runtime stack (see values below) |
+| `--integ-service` | Integration service — **required when `--type integ`**. Valid values: `ZohoCliq`, `Convokraft` |
+| `--overwrite` | Overwrite existing function with the same name — **required in NI mode if function already exists** |
 | `-ni` | Non-interactive mode (CLI v1.27.0+) |
 
 **`--type` values:**
@@ -182,7 +184,7 @@ catalyst functions:add    # Arrow-key menus for name, type, stack
 | `event` | Event function |
 | `cron` | Cron/scheduled function |
 | `job` | Job function |
-| `integ` | Integration function (requires `--integ-service`) |
+| `integ` | Integration function (requires `--integ-service`: `ZohoCliq` or `Convokraft`) |
 | `browserlogic` | Browser Logic (SmartBrowz) |
 
 **`--stack` values:**
@@ -260,11 +262,22 @@ catalyst functions:shell    # Interactive only — not available with -ni
 ```
 
 ### `catalyst functions:execute`
-Execute a function locally.
+Execute a function locally. Use this instead of `functions:shell` in non-interactive mode.
 
 ```bash
-catalyst functions:execute
+catalyst functions:execute                        # Single function — runs automatically
+catalyst functions:execute <function_name>        # Required when more than one function exists
+catalyst functions:execute <function_name> --input '{"key":"value"}'   # Inline JSON input
+catalyst functions:execute <function_name> --input payload.json        # File input
+catalyst functions:execute <function_name> --input - --key myInput     # stdin input
 ```
+
+| Flag | NI | Description |
+|------|----|-------------|
+| `[function name]` | Conditional — required when more than one function exists | The function to run; auto-selected with a single function |
+| `--input <value>` | Optional | Function input — inline JSON, a file path, or `-` for stdin |
+| `--key <input key>` | Conditional — required when the function has multiple named inputs | Selects which input to use |
+| `--debug` | Optional | Enable debugging |
 
 ### `catalyst functions:config`
 View or modify function configuration.
@@ -397,16 +410,16 @@ AppSail is for deploying full application servers (Express, Spring Boot, Flask, 
 
 ```bash
 # Node.js 18
-catalyst appsail:add --name my-api --stack node18
+catalyst appsail:add --name my-api --source ./server --stack node18
 
 # Java 17 WAR
-catalyst appsail:add --name my-service --stack java17
+catalyst appsail:add --name my-service --source ./server --stack java17
 
 # Python 3.13
-catalyst appsail:add --name my-app --stack python_3_13
+catalyst appsail:add --name my-app --source ./app --stack python_3_13
 
 # With all options
-catalyst appsail:add --name my-api --stack node18 --source ./server --build "npm run build" --platform linux --overwrite-config
+catalyst appsail:add --name my-api --source ./server --stack node18 --build "npm run build" --overwrite-config
 ```
 
 ---
@@ -414,35 +427,27 @@ catalyst appsail:add --name my-api --stack node18 --source ./server --build "npm
 ## Data Store
 
 ### `catalyst ds:import`
-Import data into the Data Store from a CSV file. Requires `--table` in non-interactive mode.
+Import data into the Data Store from a CSV file.
 
 ```bash
-# ✅ Non-interactive (CLI v1.27.0+)
-catalyst ds:import data.csv --table <TableName> -ni
-catalyst ds:import data.csv --table <TableName> --production -ni
-
-# Interactive fallback
-catalyst ds:import
+catalyst ds:import data.csv --table <TableName>
+catalyst ds:import data.csv --table <TableName> --production
 ```
 
 ### `catalyst ds:export`
 Export Data Store tables to CSV.
 
 ```bash
-# ✅ Non-interactive (CLI v1.27.0+)
-catalyst ds:export <TableName> -ni
-catalyst ds:export <TableName> --production -ni
-
-# Interactive fallback
-catalyst ds:export
+catalyst ds:export <TableName>
+catalyst ds:export <TableName> --production
 ```
 
 ### `catalyst ds:status`
 Check the status of a Data Store import/export operation.
 
 ```bash
-catalyst ds:status import <jobid> -ni
-catalyst ds:status export <jobid> -ni
+catalyst ds:status import <jobid>
+catalyst ds:status export <jobid>
 ```
 
 ---
@@ -753,7 +758,7 @@ Always follow this order when building a Catalyst project:
 3. **Create tables**: Set up Data Store tables (via console or IAC)
 4. **Configure permissions**: Set table-level and row-level access
 5. **Seed data**: Import initial data with `catalyst ds:import`
-6. **Set up compute**: Add functions (`catalyst functions:add --name <n> --type aio --stack node20 -ni`), AppSail (`appsail:add --name <n> --stack node20`), or Slate (`slate:create --name <n> --framework react-vite --default`)
+6. **Set up compute**: Add functions (`catalyst functions:add --name <n> --type aio --stack node20 -ni`), AppSail (`appsail:add --name <n> --source <dir> --stack node20`), or Slate (`slate:create --name <n> --framework react-vite -ni`)
 7. **Write code**: Implement business logic using the Catalyst SDK
 8. **Serve locally**: `catalyst serve` (port is dynamic, never hardcode)
 9. **Deploy**: `catalyst deploy`
