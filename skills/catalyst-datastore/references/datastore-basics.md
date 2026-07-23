@@ -173,7 +173,7 @@ JOINs are subject to the same 300-row result limit.
 - `text` — large text, auto max 10,000 chars
 - `int`, `bigint`, `double`, `decimal`
 - `boolean`, `date`, `datetime`
-- `foreign key` — requires `parent_table`, `parent_column`, `constraint_type`
+- `foreign key` — requires `parent_table`, `parent_column`, `constraint_type`. When creating via API or MCP tools, pass both IDs as **strings**: Catalyst IDs (~17 digits) exceed JavaScript's safe-integer limit, so numeric literals arrive rounded and creation fails with `INTERNAL_SERVER_ERROR`
 - `encrypted text` — for sensitive data; `search_index_enabled` NOT allowed
 - `text area` — for large text
 
