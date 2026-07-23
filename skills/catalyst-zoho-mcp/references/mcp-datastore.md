@@ -29,9 +29,14 @@ Creates one or more columns in an existing DataStore table. Supports batch creat
 
 // Email column
 { "column_name": "email", "data_type": "email", "is_mandatory": "true", "is_unique": "true", "search_index_enabled": "false", "audit_consent": "false" }
+
+// Foreign key column — parent_table / parent_column MUST be strings (see note below)
+{ "column_name": "owner_id", "data_type": "foreign key", "parent_table": "85698000000018006", "parent_column": "85698000000018010", "constraint_type": "ON-DELETE-CASCADE", "is_mandatory": "false", "search_index_enabled": "false", "audit_consent": "false" }
 ```
 
 **All boolean-like fields take string values:** `"true"` / `"false"` — not JSON booleans.
+
+**Foreign keys: pass `parent_table` and `parent_column` as strings.** The tool schema types them as `integer`, but Catalyst IDs (~17 digits) exceed JavaScript's safe-integer limit (2^53). A numeric JSON literal passes through a double and arrives rounded (e.g. an ID ending in `…5079` reaches the API as `…5080`), which fails with `INTERNAL_SERVER_ERROR`. The same IDs sent as quoted strings succeed. `parent_column` is the parent table's `ROWID` column ID from `CatalystbyZoho_List_All_Columns`.
 
 **Batch creation payload shape:**
 
@@ -54,3 +59,4 @@ Creates one or more columns in an existing DataStore table. Supports batch creat
 | `Missing required field is_unique` | `bigint` type requires `is_unique` | Add `"is_unique": "false"` (or `"true"`) to the column object |
 | `Invalid max_length for bigint` | `max_length` only applies to text/email types | Remove `max_length` from non-text column objects |
 | Column path variable wrong | Passing `tableId` instead of `id` in path_variables | Use `"id"` as the key name, not `"tableId"` |
+| `INTERNAL_SERVER_ERROR` on foreign key creation | Numeric `parent_table`/`parent_column` IDs rounded in transit (exceed 2^53) | Pass both IDs as quoted strings |
